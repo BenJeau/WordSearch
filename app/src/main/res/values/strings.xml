@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Crosswords</string>
+    <string name="app_name">Word Search</string>
     <string name="word_search">Word Search</string>
     <string name="high_score">High Score</string>
     <string name="na">N.A.</string>
