@@ -1,3 +1,12 @@
 <resources>
-    <string name="app_name">Word Search</string>
+    <string name="app_name">Crosswords</string>
+    <string name="word_search">Word Search</string>
+    <string name="high_score">High Score</string>
+    <string name="na">N.A.</string>
+    <string name="play_game">Play Game</string>
+    <string name="settings_description">Settings</string>
+    <string name="google_play_games_description">Google Play Games</string>
+    <string name="profile_picture_description">Profile Picture</string>
+    <string name="last_name_placeholder">Doe</string>
+    <string name="first_name_placeholder">John</string>
 </resources>
