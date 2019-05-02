@@ -1,103 +1,90 @@
 package com.benjeau.wordsearch
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Context
+import android.graphics.Typeface
 import android.os.Bundle
+import android.view.Gravity
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.flexbox.FlexboxLayout
-import android.util.TypedValue
-import android.view.ViewTreeObserver
-import android.graphics.Typeface
-import android.view.Gravity
-import androidx.core.content.res.ResourcesCompat
-
 
 class GameActivity : AppCompatActivity() {
+
+    private lateinit var letterTextViews: ArrayList<TextView>
+    private lateinit var wordBankTextViews: ArrayList<TextView>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
 
+        // Initialize arrays
+        letterTextViews = arrayListOf()
+        wordBankTextViews = arrayListOf()
+
+        // Set dummy profile picture
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
-
         Glide.with(this)
-            .load("https://api.adorable.io/avatars/100/sdf")
-            .apply(RequestOptions.circleCropTransform())
-            .into(profileIcon)
+                .load("https://api.adorable.io/avatars/100/sdf")
+                .apply(RequestOptions.circleCropTransform())
+                .into(profileIcon)
 
+        // Sets action for the home button
         val playGame: ImageButton = findViewById(R.id.homeIcon)
-        playGame.setOnClickListener{finish()}
+        playGame.setOnClickListener { finish() }
 
+        // Populates the TextViews for the game
+        val typeface = ResourcesCompat.getFont(this, R.font.actor)
+        populateWordBank(typeface)
+        populateWordSearchBoard(typeface)
+    }
+
+    private fun populateWordBank(typeface: Typeface?) {
         val wordBankLayout: FlexboxLayout = findViewById(R.id.wordBank)
-
-        val wordBank = arrayListOf("Swift", "ObjectiveC", "Java", "Kotlin", "Variable", "Mobile")
-        val wordBankText = arrayListOf<TextView>()
-
-
-        val padding = convertDpToPx(5f)
-        val fontSize = convertDpToPx(10f)
-        val fontSizeTop = convertDpToPx(8f)
-
-
-        wordBank.forEach{
+        val padding = dpToPx(5)
+        val fontSize = dpToPx(8)
+        wordBank.forEach {
             val text = TextView(this)
-            wordBankText.add(text)
-            wordBankLayout.addView(text)
             text.text = it
+            wordBankTextViews.add(text)
+            wordBankLayout.addView(text)
             text.setTextColor(resources.getColor(R.color.white))
             text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             text.setPadding(padding, padding, padding, padding)
-            val face = ResourcesCompat.getFont(this, R.font.actor)
-            text.textSize = fontSizeTop.toFloat()
-            text.typeface = face
+            text.textSize = fontSize.toFloat()
+            text.typeface = typeface
+            (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.3f
         }
+    }
 
-        wordBankLayout.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                wordBankLayout.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                wordBankText.forEach{it.width = wordBankLayout.width/3}
-            }
-        })
-
-
+    private fun populateWordSearchBoard(typeface: Typeface?) {
         val letters: FlexboxLayout = findViewById(R.id.letters)
-        val lettersText = arrayListOf<TextView>()
-        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
+        val fontSize = dpToPx(10)
         for (i in 0..98) {
-            val letter = alphabet[(0 until alphabet.length).random()].toString()
+            val letter = ALPHABET[(0 until ALPHABET.length).random()].toString()
             val text = TextView(this)
-            lettersText.add(text)
+            letterTextViews.add(text)
             letters.addView(text)
             text.text = letter
             text.setTextColor(resources.getColor(R.color.colorDarkGray))
             text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            val face = ResourcesCompat.getFont(this, R.font.actor)
             text.textSize = fontSize.toFloat()
-            text.typeface = face
+            text.typeface = typeface
             text.gravity = Gravity.CENTER
+            (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.09f
         }
-
-        letters.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                letters.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                val paddingLetters = convertDpToPx(40f)
-                lettersText.forEach{
-                    it.width = (letters.width-paddingLetters)/10
-                    it.height = (letters.height-paddingLetters)/10
-                }
-            }
-        })
     }
 
-    private fun convertDpToPx(dp: Float): Int {
-        return TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                dp,
-                resources.displayMetrics
-        ).toInt()
+    private fun dpToPx(dp: Int): Int {
+        return if (dp < 0) dp else Math.round(dp * this.resources.displayMetrics.density)
+    }
+
+    companion object {
+        private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        private val wordBank = arrayListOf("Swift", "ObjectiveC", "Java", "Kotlin", "Variable", "Mobile")
     }
 }
