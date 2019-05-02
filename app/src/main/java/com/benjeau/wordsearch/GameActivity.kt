@@ -17,7 +17,7 @@ class GameActivity : AppCompatActivity() {
 
     private lateinit var letterTextViews: ArrayList<TextView>
     private lateinit var wordBankTextViews: ArrayList<TextView>
-    private lateinit var letters: ArrayList<String>
+    private lateinit var wordSearchletters: ArrayList<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,7 +26,7 @@ class GameActivity : AppCompatActivity() {
         // Initialize arrays
         letterTextViews = arrayListOf()
         wordBankTextViews = arrayListOf()
-        letters = arrayListOf()
+        wordSearchletters = arrayListOf()
 
         // Set dummy profile picture
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
@@ -48,25 +48,63 @@ class GameActivity : AppCompatActivity() {
 
     private fun createLetters() {
         // Adds letters randomly
-        for (i in 0..98) {
-            letters.add(ALPHABET[(0 until ALPHABET.length).random()].toString())
+        for (i in 0..99) {
+            wordSearchletters.add("")
+//            letters.add(ALPHABET[(0 until ALPHABET.length).random()].toString())
         }
 
         // Adds words
         wordBank.forEach {
-            val isHorizontal = (0..1).random() == 11
-            val line = (0 until 10).random()
-            val offset = (0..it.length - 10).random()
+            var interfere = false
+            var lines = arrayListOf(0,1,2,3,4,5,6,7,8,9)
+            var isHorizontal = (0..1).random() == 1
+            var changedOrientation = false
 
-            if (isHorizontal) {
-                for (i in 0 until it.length) {
-                    letters.set(line * 10 + offset + i, it[i].toString())
+            System.out.println(it)
+            do {
+                if (interfere) {
+                    if (changedOrientation) {
+                        changedOrientation = true
+                        isHorizontal = !isHorizontal
+                    } else {
+                        changedOrientation = false
+                        interfere = false
+                        isHorizontal = !isHorizontal
+                    }
                 }
-            } else {
+
+                val line = lines[(0 until lines.size).random()]
+                val offset = (0..(10 - it.length)).random()
+
                 for (i in 0 until it.length) {
-                    letters.set(line * 10 + offset + i * 10, it[i].toString())
+                    var index = 0
+
+                    if (isHorizontal) {
+                        index = line * 10 + offset + i
+                    } else {
+                        index = offset * 10 + line + i * 10
+                    }
+
+                    if (wordSearchletters[index] != "" && wordSearchletters[index] != it[i].toString().toUpperCase()) {
+                        interfere = true
+                        break
+                    }
                 }
-            }
+
+                if (!interfere) {
+                    for (i in 0 until it.length) {
+                        var index = 0
+
+                        if (isHorizontal) {
+                            index = line * 10 + offset + i
+                        } else {
+                            index = offset * 10 + line + i * 10
+                        }
+
+                        wordSearchletters[index] = it[i].toString().toUpperCase()
+                    }
+                }
+            } while(interfere)
         }
     }
 
@@ -91,7 +129,7 @@ class GameActivity : AppCompatActivity() {
     private fun populateWordSearchBoard(typeface: Typeface?) {
         val letters: FlexboxLayout = findViewById(R.id.letters)
         val fontSize = dpToPx(10)
-        letters.forEach {
+        wordSearchletters.forEach {
             val text = TextView(this)
             letterTextViews.add(text)
             letters.addView(text)
@@ -101,7 +139,7 @@ class GameActivity : AppCompatActivity() {
             text.textSize = fontSize.toFloat()
             text.typeface = typeface
             text.gravity = Gravity.CENTER
-            (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.09f
+            (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.0875f
         }
     }
 
