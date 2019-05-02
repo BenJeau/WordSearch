@@ -17,6 +17,7 @@ class GameActivity : AppCompatActivity() {
 
     private lateinit var letterTextViews: ArrayList<TextView>
     private lateinit var wordBankTextViews: ArrayList<TextView>
+    private lateinit var letters: ArrayList<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,6 +26,7 @@ class GameActivity : AppCompatActivity() {
         // Initialize arrays
         letterTextViews = arrayListOf()
         wordBankTextViews = arrayListOf()
+        letters = arrayListOf()
 
         // Set dummy profile picture
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
@@ -39,8 +41,33 @@ class GameActivity : AppCompatActivity() {
 
         // Populates the TextViews for the game
         val typeface = ResourcesCompat.getFont(this, R.font.actor)
+        createLetters()
         populateWordBank(typeface)
         populateWordSearchBoard(typeface)
+    }
+
+    private fun createLetters() {
+        // Adds letters randomly
+        for (i in 0..98) {
+            letters.add(ALPHABET[(0 until ALPHABET.length).random()].toString())
+        }
+
+        // Adds words
+        wordBank.forEach {
+            val isHorizontal = (0..1).random() == 11
+            val line = (0 until 10).random()
+            val offset = (0..it.length - 10).random()
+
+            if (isHorizontal) {
+                for (i in 0 until it.length) {
+                    letters.set(line * 10 + offset + i, it[i].toString())
+                }
+            } else {
+                for (i in 0 until it.length) {
+                    letters.set(line * 10 + offset + i * 10, it[i].toString())
+                }
+            }
+        }
     }
 
     private fun populateWordBank(typeface: Typeface?) {
@@ -64,12 +91,11 @@ class GameActivity : AppCompatActivity() {
     private fun populateWordSearchBoard(typeface: Typeface?) {
         val letters: FlexboxLayout = findViewById(R.id.letters)
         val fontSize = dpToPx(10)
-        for (i in 0..98) {
-            val letter = ALPHABET[(0 until ALPHABET.length).random()].toString()
+        letters.forEach {
             val text = TextView(this)
             letterTextViews.add(text)
             letters.addView(text)
-            text.text = letter
+            text.text = it
             text.setTextColor(resources.getColor(R.color.colorDarkGray))
             text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             text.textSize = fontSize.toFloat()
