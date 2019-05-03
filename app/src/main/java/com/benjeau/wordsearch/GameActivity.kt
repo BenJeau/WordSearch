@@ -17,13 +17,14 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
+import android.net.Uri
 import android.os.SystemClock
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
 import android.widget.Toast
 import android.view.MotionEvent
 import java.util.*
-
+import com.google.android.gms.common.images.ImageManager
 
 class GameActivity : AppCompatActivity() {
 
@@ -36,6 +37,8 @@ class GameActivity : AppCompatActivity() {
     private lateinit var letterStates: ArrayList<Int>
 
     private lateinit var chronometer: Chronometer
+
+    private lateinit var sharedPref: SharedPreferences
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         super.onTouchEvent(event)
@@ -54,12 +57,32 @@ class GameActivity : AppCompatActivity() {
 
         setupGame()
 
+        sharedPref = SharedPreferences(this)
+
         // Set dummy profile picture
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
-        Glide.with(this)
-            .load("https://api.adorable.io/avatars/100/sdf")
-            .apply(RequestOptions.circleCropTransform())
-            .into(profileIcon)
+
+        val uri = sharedPref.getValueString("profileIconURI")
+        if (uri == null) {
+            Glide.with(this)
+                .load("https://api.adorable.io/avatars/100/shopify")
+                .apply(RequestOptions.circleCropTransform())
+                .into(profileIcon)
+        } else {
+            val mgr = ImageManager.create(this)
+            mgr.loadImage(profileIcon, Uri.parse(uri))
+        }
+
+        val firstName: TextView = findViewById(R.id.firstName)
+        val lastName: TextView = findViewById(R.id.lastName)
+
+        val profileName = sharedPref.getValueString("profileName")
+        if (profileName != null) {
+            val name = profileName.split(" ")
+            firstName.text = name[0]
+            lastName.text = name[1]
+        }
+
 
         // Sets action for the home button
         val playGame: ImageButton = findViewById(R.id.homeIcon)
@@ -324,7 +347,7 @@ class GameActivity : AppCompatActivity() {
             }
         })
         anim.duration = 500
-        anim.interpolator = AccelerateDecelerateInterpolator()
+//        anim.interpolator = AccelerateDecelerateInterpolator()
         anim.start()
     }
 
@@ -335,8 +358,7 @@ class GameActivity : AppCompatActivity() {
 
         val finishDescription: TextView = findViewById(R.id.finishDescription)
         finishDescription.text = "Completed the game in $elapsedSeconds seconds!"
-        
-        val sharedPref = SharedPreferences(this)
+
         var bestTime = sharedPref.getValueString("bestTime") ?: ""
         if (bestTime == "" || bestTime.toInt() > elapsedSeconds.toInt()) {
             bestTime = elapsedSeconds.toString()

@@ -7,8 +7,8 @@
     <string name="settings_description">Settings</string>
     <string name="google_play_games_description">Google Play Games</string>
     <string name="profile_picture_description">Profile Picture</string>
-    <string name="last_name_placeholder">Doe</string>
-    <string name="first_name_placeholder">John</string>
+    <string name="last_name_placeholder">In</string>
+    <string name="first_name_placeholder">Sign</string>
     <string name="exit_button">Exit</string>
     <string name="play_again_button">Play Again?</string>
 </resources>
