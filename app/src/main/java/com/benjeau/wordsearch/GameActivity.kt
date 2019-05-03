@@ -199,7 +199,7 @@ class GameActivity : AppCompatActivity() {
 
     private fun populateWordBank(typeface: Typeface?) {
         val wordBankLayout: FlexboxLayout = findViewById(R.id.wordBank)
-        val padding = dpToPx(5)
+        val padding = dpToPx(7)
         val fontSize = dpToPx(8)
         wordBank.forEach {
             val text = TextView(this)
@@ -212,7 +212,8 @@ class GameActivity : AppCompatActivity() {
             text.setPadding(padding, padding, padding, padding)
             text.textSize = fontSize.toFloat()
             text.typeface = typeface
-            (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.3f
+            text.gravity = Gravity.CENTER
+//            (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.3f
         }
     }
 
