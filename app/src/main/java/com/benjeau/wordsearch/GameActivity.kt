@@ -331,10 +331,17 @@ class GameActivity : AppCompatActivity() {
     private fun finishedGame() {
         chronometer.stop()
 
-        val elapsedMillis = (SystemClock.elapsedRealtime() - chronometer.base) / 1000
+        val elapsedSeconds = (SystemClock.elapsedRealtime() - chronometer.base) / 1000
 
         val finishDescription: TextView = findViewById(R.id.finishDescription)
-        finishDescription.text = "Completed the game in $elapsedMillis seconds!"
+        finishDescription.text = "Completed the game in $elapsedSeconds seconds!"
+        
+        val sharedPref = SharedPreferences(this)
+        var bestTime = sharedPref.getValueString("bestTime") ?: ""
+        if (bestTime == "" || bestTime.toInt() > elapsedSeconds.toInt()) {
+            bestTime = elapsedSeconds.toString()
+        }
+        sharedPref.store("bestTime", bestTime)
 
         val gameBoard: CardView = findViewById(R.id.gameBoard)
         val colorFrom = resources.getColor(R.color.white)

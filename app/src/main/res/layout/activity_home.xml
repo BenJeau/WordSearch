@@ -65,7 +65,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:fontFamily="@font/actor"
-            android:text="@string/high_score"
+            android:text="@string/best_time"
             android:textAlignment="center"
             android:textColor="@color/colorText"
             android:textSize="16sp"
@@ -78,12 +78,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
-            android:fontFamily="@font/actor"
             android:text="@string/na"
             android:textColor="@color/colorText"
             android:textSize="16sp"
             app:layout_constraintLeft_toRightOf="@id/highScoreTitle"
-            app:layout_constraintTop_toTopOf="@id/highScoreTitle" />
+            app:layout_constraintBottom_toBottomOf="@id/highScoreTitle" />
 
         <ImageButton
             style="@style/Base.Widget.AppCompat.Button.Borderless"
