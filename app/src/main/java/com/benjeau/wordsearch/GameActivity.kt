@@ -344,7 +344,7 @@ class GameActivity : AppCompatActivity() {
             }
         })
         anim.duration = 500
-//        anim.interpolator = AccelerateDecelerateInterpolator()
+        anim.interpolator = AccelerateDecelerateInterpolator()
         anim.start()
     }
 
@@ -409,12 +409,18 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun foundWord(wordIndex: Int) {
-        val score: TextView = findViewById(R.id.score)
-        score.text = (score.text.toString().toInt() + 1).toString()
+        if (!wordBankFound[wordIndex]) {
+            val score: TextView = findViewById(R.id.score)
+            score.text = (score.text.toString().toInt() + 1).toString()
 
-        val wordBankLayout: FlexboxLayout = findViewById(R.id.wordBank)
-        val child = wordBankLayout.getChildAt(wordIndex) as TextView
-        child.paintFlags = child.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+            val wordBankLayout: FlexboxLayout = findViewById(R.id.wordBank)
+            val child = wordBankLayout.getChildAt(wordIndex) as TextView
+            child.paintFlags = child.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+
+            if (!wordBankFound.contains(false)) {
+                finishedGame()
+            }
+        }
 
         val letters: FlexboxLayout = findViewById(R.id.letters)
 
@@ -424,10 +430,6 @@ class GameActivity : AppCompatActivity() {
             val letter = letters.getChildAt(it) as TextView
             letter.setBackgroundResource(R.drawable.letter_found)
             letter.setTextColor(resources.getColor(R.color.white))
-        }
-
-        if (!wordBankFound.contains(false)) {
-            finishedGame()
         }
     }
 

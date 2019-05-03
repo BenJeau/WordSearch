@@ -9,33 +9,51 @@
     android:padding="20dp"
     tools:context=".HomeActivity">
 
+    <include layout="@layout/profile_picture"
+        android:id="@+id/profilePicture"/>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/containerLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="64dp"
+        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toTopOf="@id/bottomInfo"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/profilePicture">
 
         <TextView
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/bungee"
             android:text="@string/word_search"
+            android:textStyle="bold"
+            android:textAllCaps="true"
             android:textSize="45sp"
+            android:textAlignment="center"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+
+        <TextView
+            android:id="@+id/subTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/actor"
+            android:textAlignment="center"
+            android:text="Shopify 2019 Fall Mobile Challenge"
+            android:textSize="16sp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/title" />
 
         <Button
             android:id="@+id/playGame"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="50dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="50dp"
             android:layout_marginBottom="10dp"
             android:background="@drawable/big_button"
@@ -49,7 +67,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/title" />
+            app:layout_constraintTop_toBottomOf="@id/subTitle" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -81,8 +99,8 @@
             android:text="@string/na"
             android:textColor="@color/colorText"
             android:textSize="16sp"
-            app:layout_constraintLeft_toRightOf="@id/highScoreTitle"
-            app:layout_constraintBottom_toBottomOf="@id/highScoreTitle" />
+            app:layout_constraintBottom_toBottomOf="@id/highScoreTitle"
+            app:layout_constraintLeft_toRightOf="@id/highScoreTitle" />
 
         <ImageButton
             android:id="@+id/googlePlayButton"

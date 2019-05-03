@@ -9,7 +9,13 @@ import android.widget.TextView
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import android.app.AlertDialog
+import android.net.Uri
+import android.widget.ImageView
+import androidx.constraintlayout.widget.ConstraintLayout
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.google.android.gms.auth.api.Auth
+import com.google.android.gms.common.images.ImageManager
 import com.google.android.gms.games.Games
 import com.google.android.gms.games.Player
 
@@ -31,11 +37,39 @@ class HomeActivity : AppCompatActivity() {
             startActivity(myIntent)
         }
 
+        checkProfile()
+
         val googlePlayIcon: ImageButton = findViewById(R.id.googlePlayButton)
         googlePlayIcon.setOnClickListener{
             val signInOptions = GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
             val signInClient = GoogleSignIn.getClient(this, signInOptions)
             startActivityForResult(signInClient.signInIntent, 5)
+        }
+    }
+
+    fun checkProfile() {
+
+        val profilePicture: ConstraintLayout = findViewById(R.id.profilePicture)
+
+        // Set dummy profile picture
+        val profileIcon: ImageView = findViewById(R.id.profileIcon)
+        val firstName: TextView = findViewById(R.id.firstName)
+        val lastName: TextView = findViewById(R.id.lastName)
+
+        val uri = sharedPref.getValueString("profileIconURI")
+        if (uri != null) {
+            val mgr = ImageManager.create(this)
+            mgr.loadImage(profileIcon, Uri.parse(uri))
+            profilePicture.alpha = 1f
+        } else {
+            profilePicture.alpha = 0f
+        }
+
+        val profileName = sharedPref.getValueString("profileName")
+        if (profileName != null) {
+            val name = profileName.split(" ")
+            firstName.text = name[0]
+            lastName.text = name[1]
         }
     }
 
@@ -55,6 +89,9 @@ class HomeActivity : AppCompatActivity() {
 
                             sharedPref.store("profileIconURI", player?.iconImageUri.toString())
                             sharedPref.store("profileName", player?.name.toString())
+
+
+                            checkProfile()
                         }
                     }
                 }
