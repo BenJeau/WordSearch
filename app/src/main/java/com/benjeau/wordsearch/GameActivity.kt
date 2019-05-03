@@ -1,32 +1,47 @@
 package com.benjeau.wordsearch
 
-import android.content.Context
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.flexbox.FlexboxLayout
+import androidx.cardview.widget.CardView
+import androidx.constraintlayout.widget.ConstraintLayout
+import kotlin.collections.ArrayList
+import android.R.attr.button
+import android.animation.Animator
+import android.animation.ValueAnimator
+import android.os.Handler
+import androidx.constraintlayout.widget.ConstraintSet
+import android.animation.AnimatorListenerAdapter
+import android.animation.ArgbEvaluator
+import android.os.SystemClock
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.*
+import android.animation.ValueAnimator.AnimatorUpdateListener
+
+
+
 
 class GameActivity : AppCompatActivity() {
 
     private lateinit var letterTextViews: ArrayList<TextView>
     private lateinit var wordBankTextViews: ArrayList<TextView>
+    private lateinit var wordBank: ArrayList<String>
     private lateinit var wordSearchletters: ArrayList<String>
+
+    private lateinit var chronometer: Chronometer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
 
-        // Initialize arrays
-        letterTextViews = arrayListOf()
-        wordBankTextViews = arrayListOf()
-        wordSearchletters = arrayListOf()
+        setupGame()
 
         // Set dummy profile picture
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
@@ -37,7 +52,44 @@ class GameActivity : AppCompatActivity() {
 
         // Sets action for the home button
         val playGame: ImageButton = findViewById(R.id.homeIcon)
-        playGame.setOnClickListener { finish() }
+        playGame.setOnClickListener {
+//            finish()
+            finishedGame()
+        }
+
+        foundWord(1)
+
+        val playAgainButton: Button = findViewById(R.id.playAgainButton)
+        playAgainButton.setOnClickListener{
+            playAgain()
+        }
+
+        val exitButton: Button = findViewById(R.id.exitButton)
+        exitButton.setOnClickListener{
+            finish()
+        }
+    }
+
+    private fun setupGame() {
+        // Initialize arrays
+        letterTextViews = arrayListOf()
+        wordBankTextViews = arrayListOf()
+        wordSearchletters = arrayListOf()
+
+        wordBank = WORDBANK
+
+        chronometer = findViewById(R.id.time)
+        chronometer.base = SystemClock.elapsedRealtime()
+        chronometer.start()
+
+        val letters: FlexboxLayout = findViewById(R.id.letters)
+        letters.removeAllViews()
+
+        val wordBankLayout: FlexboxLayout = findViewById(R.id.wordBank)
+        wordBankLayout.removeAllViews()
+
+        val score: TextView = findViewById(R.id.score)
+        score.text = "0"
 
         // Populates the TextViews for the game
         val typeface = ResourcesCompat.getFont(this, R.font.actor)
@@ -143,12 +195,110 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
+    private fun playAgain() {
+        setupGame()
+
+        val gameBoard: CardView = findViewById(R.id.gameBoard)
+        val colorFrom = resources.getColor(R.color.colorAccent)
+        val colorTo = resources.getColor(R.color.white)
+        val colorAnimation = ValueAnimator.ofObject(ArgbEvaluator(), colorFrom, colorTo)
+        colorAnimation.duration = 500 // milliseconds
+        colorAnimation.addUpdateListener { animator -> gameBoard.setCardBackgroundColor(animator.animatedValue as Int) }
+        colorAnimation.start()
+
+        val gameBoardContent: ConstraintLayout = findViewById(R.id.gameBoardContent)
+        gameBoardContent.animate().alpha(1.0f).duration = 500
+        gameBoardContent.visibility = View.VISIBLE
+
+        val gameBoardFinished: ConstraintLayout = findViewById(R.id.gameBoardFinished)
+        gameBoardFinished.visibility = View.GONE
+        gameBoardFinished.animate().alpha(0.0f).duration = 500
+
+        val gameInfo: CardView = findViewById(R.id.gameInfo)
+
+        val anim = ValueAnimator.ofInt(0, 143)
+        val topPadding = dpToPx(20)
+        anim.addUpdateListener { valueAnimator ->
+            val `val` = valueAnimator.animatedValue as Int
+            val layoutParams = gameInfo.layoutParams as ConstraintLayout.LayoutParams
+            layoutParams.height = `val`
+            layoutParams.setMargins(0, ((`val`.toFloat() / 143.0) * topPadding.toFloat()).toInt(), 0, 0)
+            gameInfo.layoutParams = layoutParams
+            gameInfo.visibility = View.VISIBLE
+        }
+        anim.addListener(object : AnimatorListenerAdapter() {
+            override
+            fun onAnimationEnd(animation: Animator) {
+                val layoutParams = gameInfo.layoutParams
+                layoutParams.height = 143
+                gameInfo.layoutParams = layoutParams
+            }
+        })
+        anim.duration = 500
+        anim.interpolator = AccelerateDecelerateInterpolator()
+        anim.start()
+    }
+
+    private fun finishedGame() {
+        chronometer.stop()
+
+        val gameBoard: CardView = findViewById(R.id.gameBoard)
+        val colorFrom = resources.getColor(R.color.white)
+        val colorTo = resources.getColor(R.color.colorAccent)
+        val colorAnimation = ValueAnimator.ofObject(ArgbEvaluator(), colorFrom, colorTo)
+        colorAnimation.duration = 500 // milliseconds
+        colorAnimation.addUpdateListener { animator -> gameBoard.setCardBackgroundColor(animator.animatedValue as Int) }
+        colorAnimation.start()
+
+        val gameBoardContent: ConstraintLayout = findViewById(R.id.gameBoardContent)
+        gameBoardContent.animate().alpha(0.0f)
+        gameBoardContent.visibility = View.GONE
+
+        val gameBoardFinished: ConstraintLayout = findViewById(R.id.gameBoardFinished)
+        gameBoardFinished.visibility = View.VISIBLE
+        gameBoardFinished.animate().alpha(1.0f)
+
+        val gameInfo: CardView = findViewById(R.id.gameInfo)
+
+        val anim = ValueAnimator.ofInt(gameInfo.measuredHeight, 0)
+        val topPadding = (gameInfo.layoutParams as ConstraintLayout.LayoutParams).topMargin
+        anim.addUpdateListener { valueAnimator ->
+            val `val` = valueAnimator.animatedValue as Int
+            val layoutParams = gameInfo.layoutParams as ConstraintLayout.LayoutParams
+            layoutParams.height = `val`
+            layoutParams.setMargins(0, ((`val`.toFloat() / 143.0) * topPadding.toFloat()).toInt(), 0, 0)
+            gameInfo.layoutParams = layoutParams
+        }
+        anim.addListener(object : AnimatorListenerAdapter() {
+            override
+            fun onAnimationEnd(animation: Animator) {
+                val layoutParams = gameInfo.layoutParams
+                layoutParams.height = 0
+                gameInfo.layoutParams = layoutParams
+                gameInfo.visibility = View.GONE
+            }
+        })
+        anim.duration = 500
+        anim.interpolator = AccelerateDecelerateInterpolator()
+        anim.start()
+    }
+
+    private fun foundWord(wordIndex: Int) {
+        val score: TextView = findViewById(R.id.score)
+        score.text = (score.text.toString().toInt() + 1).toString()
+        wordBankTextViews[wordIndex].paintFlags = wordBankTextViews[wordIndex].paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+    }
+
+    private fun handleTouch() {
+        
+    }
+
     private fun dpToPx(dp: Int): Int {
         return if (dp < 0) dp else Math.round(dp * this.resources.displayMetrics.density)
     }
 
     companion object {
         private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        private val wordBank = arrayListOf("Swift", "ObjectiveC", "Java", "Kotlin", "Variable", "Mobile")
+        private val WORDBANK = arrayListOf("Swift", "ObjectiveC", "Java", "Kotlin", "Variable", "Mobile")
     }
 }
