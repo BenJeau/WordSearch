@@ -9,4 +9,6 @@
     <string name="profile_picture_description">Profile Picture</string>
     <string name="last_name_placeholder">Doe</string>
     <string name="first_name_placeholder">John</string>
+    <string name="exit_button">Exit</string>
+    <string name="play_again_button">Play Again?</string>
 </resources>

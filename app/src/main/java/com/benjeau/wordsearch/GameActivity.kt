@@ -63,12 +63,7 @@ class GameActivity : AppCompatActivity() {
 
         // Sets action for the home button
         val playGame: ImageButton = findViewById(R.id.homeIcon)
-        playGame.setOnClickListener {
-            //            finish()
-            finishedGame()
-        }
-
-        foundWord(1)
+        playGame.setOnClickListener { finish() }
 
         val playAgainButton: Button = findViewById(R.id.playAgainButton)
         playAgainButton.setOnClickListener {
@@ -335,6 +330,11 @@ class GameActivity : AppCompatActivity() {
 
     private fun finishedGame() {
         chronometer.stop()
+
+        val elapsedMillis = (SystemClock.elapsedRealtime() - chronometer.base) / 1000
+
+        val finishDescription: TextView = findViewById(R.id.finishDescription)
+        finishDescription.text = "Completed the game in $elapsedMillis seconds!"
 
         val gameBoard: CardView = findViewById(R.id.gameBoard)
         val colorFrom = resources.getColor(R.color.white)
