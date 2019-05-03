@@ -13,19 +13,16 @@ import com.google.android.flexbox.FlexboxLayout
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import kotlin.collections.ArrayList
-import android.R.attr.button
 import android.animation.Animator
 import android.animation.ValueAnimator
-import android.os.Handler
-import androidx.constraintlayout.widget.ConstraintSet
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
 import android.os.SystemClock
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
-import android.animation.ValueAnimator.AnimatorUpdateListener
-
-
+import android.widget.Toast
+import android.view.MotionEvent
+import java.util.*
 
 
 class GameActivity : AppCompatActivity() {
@@ -33,9 +30,23 @@ class GameActivity : AppCompatActivity() {
     private lateinit var letterTextViews: ArrayList<TextView>
     private lateinit var wordBankTextViews: ArrayList<TextView>
     private lateinit var wordBank: ArrayList<String>
+    private lateinit var wordBankFound: ArrayList<Boolean>
     private lateinit var wordSearchletters: ArrayList<String>
+    private lateinit var wordBankSearch: MutableMap<String, ArrayList<Int>>
+    private lateinit var letterStates: ArrayList<Int>
 
     private lateinit var chronometer: Chronometer
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        super.onTouchEvent(event)
+        val x = event.x
+        val y = event.y
+        Toast.makeText(
+            this, "x=$x y=$y",
+            Toast.LENGTH_SHORT
+        ).show()
+        return false
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,26 +57,26 @@ class GameActivity : AppCompatActivity() {
         // Set dummy profile picture
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
         Glide.with(this)
-                .load("https://api.adorable.io/avatars/100/sdf")
-                .apply(RequestOptions.circleCropTransform())
-                .into(profileIcon)
+            .load("https://api.adorable.io/avatars/100/sdf")
+            .apply(RequestOptions.circleCropTransform())
+            .into(profileIcon)
 
         // Sets action for the home button
         val playGame: ImageButton = findViewById(R.id.homeIcon)
         playGame.setOnClickListener {
-//            finish()
+            //            finish()
             finishedGame()
         }
 
         foundWord(1)
 
         val playAgainButton: Button = findViewById(R.id.playAgainButton)
-        playAgainButton.setOnClickListener{
+        playAgainButton.setOnClickListener {
             playAgain()
         }
 
         val exitButton: Button = findViewById(R.id.exitButton)
-        exitButton.setOnClickListener{
+        exitButton.setOnClickListener {
             finish()
         }
     }
@@ -75,6 +86,9 @@ class GameActivity : AppCompatActivity() {
         letterTextViews = arrayListOf()
         wordBankTextViews = arrayListOf()
         wordSearchletters = arrayListOf()
+        wordBankSearch = mutableMapOf()
+        letterStates = arrayListOf()
+        wordBankFound = arrayListOf()
 
         wordBank = WORDBANK
 
@@ -102,17 +116,15 @@ class GameActivity : AppCompatActivity() {
         // Adds letters randomly
         for (i in 0..99) {
             wordSearchletters.add("")
-//            letters.add(ALPHABET[(0 until ALPHABET.length).random()].toString())
         }
 
         // Adds words
         wordBank.forEach {
             var interfere = false
-            var lines = arrayListOf(0,1,2,3,4,5,6,7,8,9)
+            val lines = arrayListOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
             var isHorizontal = (0..1).random() == 1
             var changedOrientation = false
 
-            System.out.println(it)
             do {
                 if (interfere) {
                     if (changedOrientation) {
@@ -144,6 +156,7 @@ class GameActivity : AppCompatActivity() {
                 }
 
                 if (!interfere) {
+                    wordBankSearch[it] = arrayListOf()
                     for (i in 0 until it.length) {
                         var index = 0
 
@@ -153,10 +166,16 @@ class GameActivity : AppCompatActivity() {
                             index = offset * 10 + line + i * 10
                         }
 
+                        wordBankSearch[it]?.add(index)
                         wordSearchletters[index] = it[i].toString().toUpperCase()
                     }
                 }
-            } while(interfere)
+            } while (interfere)
+        }
+
+        for (i in 0..99) {
+            if (wordSearchletters[i] == "")
+                wordSearchletters[i] = (ALPHABET[(0 until ALPHABET.length).random()].toString())
         }
     }
 
@@ -168,6 +187,7 @@ class GameActivity : AppCompatActivity() {
             val text = TextView(this)
             text.text = it
             wordBankTextViews.add(text)
+            wordBankFound.add(false)
             wordBankLayout.addView(text)
             text.setTextColor(resources.getColor(R.color.white))
             text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
@@ -181,16 +201,85 @@ class GameActivity : AppCompatActivity() {
     private fun populateWordSearchBoard(typeface: Typeface?) {
         val letters: FlexboxLayout = findViewById(R.id.letters)
         val fontSize = dpToPx(10)
-        wordSearchletters.forEach {
+        wordSearchletters.forEachIndexed { index, letter ->
             val text = TextView(this)
             letterTextViews.add(text)
             letters.addView(text)
-            text.text = it
+            letterStates.add(0)
+            text.text = letter
             text.setTextColor(resources.getColor(R.color.colorDarkGray))
             text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             text.textSize = fontSize.toFloat()
             text.typeface = typeface
             text.gravity = Gravity.CENTER
+            text.setOnClickListener { v ->
+                var changeState = true
+
+                if (letterStates.contains(1) || letterStates.contains(3)) {
+                    val numSelected = letterStates.count { it == 1 || it == 3 }
+
+                    if (numSelected == 1) {
+                        when (val letterIndex = if (letterStates.indexOf(1) > 0) letterStates.indexOf(1) else letterStates.indexOf(3)) {
+                            // Checks if clicked on the same letter
+                            index -> changeState = true
+                            // Checks the top left corner
+                            0 -> changeState = index == letterIndex + 1 || index == letterIndex + 10
+                            // Checks the top right corner
+                            9 -> changeState = index == letterIndex - 1 || index == letterIndex + 10
+                            // Checks the bottom left corner
+                            90 -> changeState = index == letterIndex + 1 || index == letterIndex - 10
+                            // Checks the bottom right corner
+                            99 -> changeState = index == letterIndex - 1 || index == letterIndex - 10
+                            // Checks the top
+                            in 1..8 -> changeState = index == letterIndex + 1 || index == letterIndex - 1 || index == letterIndex + 10
+                            // Checks the bottom
+                            in 91..98 -> changeState = index == letterIndex + 1 || index == letterIndex - 1 || index == letterIndex - 10
+                            // Checks the left
+                            in 10 until 99 step 10 -> changeState = index == letterIndex + 1 || index == letterIndex + 10 || index == letterIndex - 10
+                            // Checks the right
+                            in 9 until 99 step 10 -> changeState = index == letterIndex - 1 || index == letterIndex + 10 || index == letterIndex - 10
+                            else -> changeState = index == letterIndex - 1 || index == letterIndex + 1 || index == letterIndex + 10 || index == letterIndex - 10
+                        }
+                    } else {
+                        val let = letterStates.withIndex().filter { it.value == 1 || it.value == 3 }. map { it.index }
+                        val isHorizontal = let[0] in let[1]-1..let[1]+1
+                        val line: Int = if (isHorizontal) Math.floor(let[0] / 10.toDouble()).toInt() else let[0] % 10
+                        val firstOffset: Int = if (!isHorizontal) Math.floor(let.first() / 10.toDouble()).toInt() else let.first() % 10
+                        val lastOffset: Int = if (!isHorizontal) Math.floor(let.last() / 10.toDouble()).toInt() else let.last() % 10
+                        val currentOffset: Int = if (!isHorizontal) Math.floor(index / 10.toDouble()).toInt() else index % 10
+
+                        // Restricts the user to only select letters from the same line
+                        val sameLine = (if (isHorizontal) Math.floor(index / 10.toDouble()).toInt() else index % 10) == line
+                        val before = currentOffset == firstOffset - 1
+                        val after = currentOffset == lastOffset +1
+                        changeState = sameLine && ( before|| after) || letterStates[index] == 1|| letterStates[index] == 3
+                    }
+                }
+
+                if (changeState) {
+                    if (letterStates[index] == 0) {
+                        v.setBackgroundResource(R.drawable.letter_select)
+                        letterStates[index]++
+                    } else if (letterStates[index] == 2) {
+                        v.setBackgroundResource(R.drawable.letter_select_found)
+                        letterStates[index]++
+                    } else {
+                        if (letterStates[index] == 1) {
+                            v.setBackgroundResource(0)
+                        } else {
+                            v.setBackgroundResource(R.drawable.letter_found)
+                        }
+                        letterStates[index]--
+                    }
+                }
+
+
+                val let = letterStates.withIndex().filter { it.value == 1 || it.value == 3 }. map { it.index }
+                val foundshit = wordBankSearch.filterValues { Arrays.equals(it.toIntArray(), let.toIntArray()) }
+                if (foundshit.isNotEmpty()) {
+                    foundWord(wordBank.indexOf(foundshit.keys.first()))
+                }
+            }
             (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.0875f
         }
     }
@@ -222,7 +311,12 @@ class GameActivity : AppCompatActivity() {
             val `val` = valueAnimator.animatedValue as Int
             val layoutParams = gameInfo.layoutParams as ConstraintLayout.LayoutParams
             layoutParams.height = `val`
-            layoutParams.setMargins(0, ((`val`.toFloat() / 143.0) * topPadding.toFloat()).toInt(), 0, 0)
+            layoutParams.setMargins(
+                0,
+                ((`val`.toFloat() / 143.0) * topPadding.toFloat()).toInt(),
+                0,
+                0
+            )
             gameInfo.layoutParams = layoutParams
             gameInfo.visibility = View.VISIBLE
         }
@@ -266,7 +360,12 @@ class GameActivity : AppCompatActivity() {
             val `val` = valueAnimator.animatedValue as Int
             val layoutParams = gameInfo.layoutParams as ConstraintLayout.LayoutParams
             layoutParams.height = `val`
-            layoutParams.setMargins(0, ((`val`.toFloat() / 143.0) * topPadding.toFloat()).toInt(), 0, 0)
+            layoutParams.setMargins(
+                0,
+                ((`val`.toFloat() / 143.0) * topPadding.toFloat()).toInt(),
+                0,
+                0
+            )
             gameInfo.layoutParams = layoutParams
         }
         anim.addListener(object : AnimatorListenerAdapter() {
@@ -286,11 +385,18 @@ class GameActivity : AppCompatActivity() {
     private fun foundWord(wordIndex: Int) {
         val score: TextView = findViewById(R.id.score)
         score.text = (score.text.toString().toInt() + 1).toString()
-        wordBankTextViews[wordIndex].paintFlags = wordBankTextViews[wordIndex].paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-    }
+        wordBankTextViews[wordIndex].paintFlags =
+            wordBankTextViews[wordIndex].paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+        wordBankFound[wordIndex] = true
+        wordBankSearch[wordBank[wordIndex]]?.forEach {
+            letterStates[it] = 2
+            letterTextViews[it].setBackgroundResource(R.drawable.letter_found)
+            letterTextViews[it].setTextColor(resources.getColor(R.color.white))
+        }
 
-    private fun handleTouch() {
-        
+        if (!wordBankFound.contains(false)) {
+            finishedGame()
+        }
     }
 
     private fun dpToPx(dp: Int): Int {
@@ -299,6 +405,7 @@ class GameActivity : AppCompatActivity() {
 
     companion object {
         private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        private val WORDBANK = arrayListOf("Swift", "ObjectiveC", "Java", "Kotlin", "Variable", "Mobile")
+        private val WORDBANK =
+            arrayListOf("Swift", "ObjectiveC", "Java", "Kotlin", "Variable", "Mobile")
     }
 }
