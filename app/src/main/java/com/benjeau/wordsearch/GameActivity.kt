@@ -63,7 +63,7 @@ class GameActivity : AppCompatActivity() {
         val uri = sharedPref.getValueString("profileIconURI")
         if (uri == null) {
             Glide.with(this)
-                .load("https://api.adorable.io/avatars/100/shopify")
+                .load("https://api.adorable.io/avatars/100/wordSearch")
                 .apply(RequestOptions.circleCropTransform())
                 .into(profileIcon)
         } else {

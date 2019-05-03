@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent">
 
-        <include layout="@layout/profile_picture"/>
+        <include layout="@layout/profile_picture" />
 
         <ImageButton
             android:id="@+id/homeIcon"
@@ -54,7 +54,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/actor"
-                android:text="Score"
+                android:text="@string/score"
                 android:textColor="@color/colorText"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -67,7 +67,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="5dp"
-                android:text="0"
                 android:textColor="@color/colorText"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="@id/scoreTitle"
@@ -79,7 +78,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="5dp"
                 android:fontFamily="@font/actor"
-                android:text="Time"
+                android:text="@string/time"
                 android:textColor="@color/colorText"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -131,6 +130,7 @@
                     android:id="@+id/checkIcon"
                     android:layout_width="100dp"
                     android:layout_height="100dp"
+                    android:contentDescription="@string/checkmark"
                     android:src="@drawable/ic_check_black_40dp"
                     android:tint="@android:color/white"
                     app:layout_constraintLeft_toLeftOf="parent"
@@ -219,6 +219,7 @@
                     app:justifyContent="space_around"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/wordBank" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

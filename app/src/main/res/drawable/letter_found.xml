@@ -5,10 +5,11 @@
             <solid android:color="@color/white" />
         </shape>
     </item>
-    <item android:top="2dp"
+    <item
         android:bottom="2dp"
         android:left="2dp"
-        android:right="2dp">
+        android:right="2dp"
+        android:top="2dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp" />
             <solid android:color="@color/colorDarkGray" />
