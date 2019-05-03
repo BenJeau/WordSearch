@@ -28,8 +28,6 @@ import com.google.android.gms.common.images.ImageManager
 
 class GameActivity : AppCompatActivity() {
 
-    private lateinit var letterTextViews: ArrayList<TextView>
-    private lateinit var wordBankTextViews: ArrayList<TextView>
     private lateinit var wordBank: ArrayList<String>
     private lateinit var wordBankFound: ArrayList<Boolean>
     private lateinit var wordSearchletters: ArrayList<String>
@@ -83,7 +81,6 @@ class GameActivity : AppCompatActivity() {
             lastName.text = name[1]
         }
 
-
         // Sets action for the home button
         val playGame: ImageButton = findViewById(R.id.homeIcon)
         playGame.setOnClickListener { finish() }
@@ -101,8 +98,6 @@ class GameActivity : AppCompatActivity() {
 
     private fun setupGame() {
         // Initialize arrays
-        letterTextViews = arrayListOf()
-        wordBankTextViews = arrayListOf()
         wordSearchletters = arrayListOf()
         wordBankSearch = mutableMapOf()
         letterStates = arrayListOf()
@@ -204,7 +199,6 @@ class GameActivity : AppCompatActivity() {
         wordBank.forEach {
             val text = TextView(this)
             text.text = it
-            wordBankTextViews.add(text)
             wordBankFound.add(false)
             wordBankLayout.addView(text)
             text.setTextColor(resources.getColor(R.color.white))
@@ -213,7 +207,6 @@ class GameActivity : AppCompatActivity() {
             text.textSize = fontSize.toFloat()
             text.typeface = typeface
             text.gravity = Gravity.CENTER
-//            (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.3f
         }
     }
 
@@ -222,7 +215,6 @@ class GameActivity : AppCompatActivity() {
         val fontSize = dpToPx(10)
         wordSearchletters.forEachIndexed { index, letter ->
             val text = TextView(this)
-            letterTextViews.add(text)
             letters.addView(text)
             letterStates.add(0)
             text.text = letter
@@ -238,26 +230,31 @@ class GameActivity : AppCompatActivity() {
                     val numSelected = letterStates.count { it == 1 || it == 3 }
 
                     if (numSelected == 1) {
-                        when (val letterIndex = if (letterStates.indexOf(1) > 0) letterStates.indexOf(1) else letterStates.indexOf(3)) {
+                        val letterIndex = if (letterStates.indexOf(1) >= 0) letterStates.indexOf(1) else letterStates.indexOf(3)
+                        val isTop = index == letterIndex - 10
+                        val isBottom = index == letterIndex + 10
+                        val isLeft = index == letterIndex - 1
+                        val isRight = index == letterIndex + 1
+                        when (letterIndex) {
                             // Checks if clicked on the same letter
                             index -> changeState = true
                             // Checks the top left corner
-                            0 -> changeState = index == letterIndex + 1 || index == letterIndex + 10
+                            0 -> changeState = isRight || isBottom
                             // Checks the top right corner
-                            9 -> changeState = index == letterIndex - 1 || index == letterIndex + 10
+                            9 -> changeState = isLeft || isBottom
                             // Checks the bottom left corner
-                            90 -> changeState = index == letterIndex + 1 || index == letterIndex - 10
+                            90 -> changeState = isRight || isTop
                             // Checks the bottom right corner
-                            99 -> changeState = index == letterIndex - 1 || index == letterIndex - 10
+                            99 -> changeState = isLeft || isTop
                             // Checks the top
-                            in 1..8 -> changeState = index == letterIndex + 1 || index == letterIndex - 1 || index == letterIndex + 10
+                            in 1..8 -> changeState = isRight || isLeft || isBottom
                             // Checks the bottom
-                            in 91..98 -> changeState = index == letterIndex + 1 || index == letterIndex - 1 || index == letterIndex - 10
+                            in 91..98 -> changeState = isRight || isLeft || isTop
                             // Checks the left
-                            in 10 until 99 step 10 -> changeState = index == letterIndex + 1 || index == letterIndex + 10 || index == letterIndex - 10
+                            in 10 until 99 step 10 -> changeState = isRight || isBottom || isTop
                             // Checks the right
-                            in 9 until 99 step 10 -> changeState = index == letterIndex - 1 || index == letterIndex + 10 || index == letterIndex - 10
-                            else -> changeState = index == letterIndex - 1 || index == letterIndex + 1 || index == letterIndex + 10 || index == letterIndex - 10
+                            in 9 until 99 step 10 -> changeState = isLeft || isBottom || isTop
+                            else -> changeState = isLeft || isRight || isBottom || isTop
                         }
                     } else {
                         val let = letterStates.withIndex().filter { it.value == 1 || it.value == 3 }. map { it.index }
@@ -291,7 +288,6 @@ class GameActivity : AppCompatActivity() {
                         letterStates[index]--
                     }
                 }
-
 
                 val let = letterStates.withIndex().filter { it.value == 1 || it.value == 3 }. map { it.index }
                 val foundshit = wordBankSearch.filterValues { Arrays.equals(it.toIntArray(), let.toIntArray()) }
@@ -415,13 +411,19 @@ class GameActivity : AppCompatActivity() {
     private fun foundWord(wordIndex: Int) {
         val score: TextView = findViewById(R.id.score)
         score.text = (score.text.toString().toInt() + 1).toString()
-        wordBankTextViews[wordIndex].paintFlags =
-            wordBankTextViews[wordIndex].paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+
+        val wordBankLayout: FlexboxLayout = findViewById(R.id.wordBank)
+        val child = wordBankLayout.getChildAt(wordIndex) as TextView
+        child.paintFlags = child.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+
+        val letters: FlexboxLayout = findViewById(R.id.letters)
+
         wordBankFound[wordIndex] = true
         wordBankSearch[wordBank[wordIndex]]?.forEach {
             letterStates[it] = 2
-            letterTextViews[it].setBackgroundResource(R.drawable.letter_found)
-            letterTextViews[it].setTextColor(resources.getColor(R.color.white))
+            val letter = letters.getChildAt(it) as TextView
+            letter.setBackgroundResource(R.drawable.letter_found)
+            letter.setTextColor(resources.getColor(R.color.white))
         }
 
         if (!wordBankFound.contains(false)) {
