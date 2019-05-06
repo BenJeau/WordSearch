@@ -12,8 +12,6 @@ import android.app.AlertDialog
 import android.net.Uri
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.common.images.ImageManager
 import com.google.android.gms.games.Games
@@ -21,24 +19,21 @@ import com.google.android.gms.games.Player
 
 class HomeActivity : AppCompatActivity() {
 
-    private lateinit var sharedPref: SharedPreferences
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        sharedPref = SharedPreferences(this)
-        val highScoreText: TextView = findViewById(R.id.highScore)
-        highScoreText.text = if (sharedPref.getValueString("bestTime") == null) "N.A." else sharedPref.getValueString("bestTime") + " s."
+        checkProfile()
+        updateBestTime()
 
+        // Goes to the next screen (game)
         val playGame: Button = findViewById(R.id.playGame)
         playGame.setOnClickListener{
             val myIntent = Intent(this, GameActivity::class.java)
             startActivity(myIntent)
         }
 
-        checkProfile()
-
+        // Shows prompt to sign in Google Play Games
         val googlePlayIcon: ImageButton = findViewById(R.id.googlePlayButton)
         googlePlayIcon.setOnClickListener{
             val signInOptions = GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
@@ -47,16 +42,30 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    fun checkProfile() {
+    /**
+     * Gets the value of the best time from shared preferences and displays it
+     */
+    private fun updateBestTime() {
+        val highScoreText: TextView = findViewById(R.id.highScore)
+        highScoreText.text = if (getSharedPrefString("bestTime") == null) "N.A." else getSharedPrefString("bestTime") + " s."
+    }
 
+    /**
+     * Puts the information about the signed in user, if the user is signed in Google Play Games
+     */
+    private fun checkProfile() {
         val profilePicture: ConstraintLayout = findViewById(R.id.profilePicture)
+        profilePicture.setOnClickListener{
+            signOut()
+            checkProfile()
+        }
 
         // Set dummy profile picture
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
         val firstName: TextView = findViewById(R.id.firstName)
         val lastName: TextView = findViewById(R.id.lastName)
 
-        val uri = sharedPref.getValueString("profileIconURI")
+        val uri = getSharedPrefString("profileIconURI")
         if (uri != null) {
             val mgr = ImageManager.create(this)
             mgr.loadImage(profileIcon, Uri.parse(uri))
@@ -65,11 +74,21 @@ class HomeActivity : AppCompatActivity() {
             profilePicture.alpha = 0f
         }
 
-        val profileName = sharedPref.getValueString("profileName")
+        val profileName = getSharedPrefString("profileName")
         if (profileName != null) {
             val name = profileName.split(" ")
             firstName.text = name[0]
             lastName.text = name[1]
+        }
+    }
+
+    private fun signOut() {
+        val signInClient = GoogleSignIn.getClient(this,
+        GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN)
+        signInClient.signOut().addOnCompleteListener(this
+        ) {
+            storeSharedPref("profileIconURI", null)
+            storeSharedPref("profileName", null)
         }
     }
 
@@ -87,9 +106,9 @@ class HomeActivity : AppCompatActivity() {
                         if (task.isSuccessful) {
                             val player: Player? = task.result
 
-                            sharedPref.store("profileIconURI", player?.iconImageUri.toString())
-                            sharedPref.store("profileName", player?.name.toString())
-
+                            // Saves the information about the user in the shared preferences
+                            storeSharedPref("profileIconURI", player?.iconImageUri.toString())
+                            storeSharedPref("profileName", player?.name.toString())
 
                             checkProfile()
                         }
@@ -109,8 +128,6 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-
-        val highScoreText: TextView = findViewById(R.id.highScore)
-        highScoreText.text = if (sharedPref.getValueString("bestTime") == null) "N.A." else sharedPref.getValueString("bestTime") + " s."
+        updateBestTime()
     }
 }
