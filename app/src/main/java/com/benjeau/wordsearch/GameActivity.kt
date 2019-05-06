@@ -7,8 +7,6 @@ import android.view.Gravity
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.google.android.flexbox.FlexboxLayout
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -17,6 +15,8 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
+import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.SystemClock
 import android.view.MotionEvent
@@ -79,6 +79,7 @@ class GameActivity : AppCompatActivity() {
 
     private var gameInfoHeight: Int? = null
     private var elapsedSeconds: Int = -1
+    private var wordBankTextColor: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,6 +98,13 @@ class GameActivity : AppCompatActivity() {
             score.text = savedInstanceState.getString("score")
             chronometer.base = savedInstanceState.getLong("chronometerBase")
             chronometer.start()
+
+            wordBankFound.forEachIndexed {index, i ->
+                if (i) {
+                    val child = wordBankLayout.getChildAt(index) as TextView
+                    child.paintFlags = child.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                }
+            }
 
             if (!wordBankFound.contains(false)) {
                 gameInfo.visibility = View.GONE
@@ -125,12 +133,6 @@ class GameActivity : AppCompatActivity() {
                         }
                     }
                 }
-                wordBankFound.forEachIndexed {index, i ->
-                    if (i) {
-                        val child = wordBankLayout.getChildAt(index) as TextView
-                        child.paintFlags = child.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                    }
-                }
             }
         }
     }
@@ -153,7 +155,6 @@ class GameActivity : AppCompatActivity() {
      */
     private fun initialSetup(rotated: Boolean) {
         setupViews()
-        setupGame(rotated)
 
         gameInfo.post {
             gameInfo.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
@@ -163,18 +164,18 @@ class GameActivity : AppCompatActivity() {
         // Defines the typeface used for the TextViews programmatically inserted
         typeface = ResourcesCompat.getFont(this, R.font.actor)
 
+        val playAgainIcon: ImageButton = findViewById(R.id.playAgainIcon)
+        playAgainIcon.setOnClickListener { setupGame(false) }
+
         // Sets the profile picture and fetches a dummy profile picture if the user is not signed in
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
 
         val uri = getSharedPrefString("profilePictureURI")
         if (uri == null) {
-            Glide.with(this)
-                .load("https://api.adorable.io/avatars/100/wordSearch")
-                .apply(RequestOptions.circleCropTransform())
-                .into(profileIcon)
+            profileIcon.setImageResource(R.drawable.profile_pic_placeholder)
         } else {
             val imageManager = ImageManager.create(this)
-            imageManager.loadImage(profileIcon, Uri.parse(uri))
+            imageManager.loadImage(profileIcon, Uri.parse(uri), R.drawable.profile_pic_placeholder)
         }
 
         // Sets the profile name if signed in
@@ -188,6 +189,12 @@ class GameActivity : AppCompatActivity() {
             lastName.text = name.last()
         }
 
+        val swatch = createPaletteSync((profileIcon.drawable as BitmapDrawable).bitmap).vibrantSwatch
+        if (swatch != null) {
+            wordBankLayout.setBackgroundColor(swatch.rgb)
+            wordBankTextColor = swatch.bodyTextColor
+        }
+
         // Sets action for the home button
         val homeIcon: ImageButton = findViewById(R.id.homeIcon)
         homeIcon.setOnClickListener { finish() }
@@ -197,6 +204,8 @@ class GameActivity : AppCompatActivity() {
         val exitButton: Button = findViewById(R.id.exitButton)
         playAgainButton.setOnClickListener { playAgain() }
         exitButton.setOnClickListener { finish() }
+
+        setupGame(rotated)
     }
 
     /**
@@ -362,9 +371,9 @@ class GameActivity : AppCompatActivity() {
      * Populates the words in the layout of the word search bank
      */
     private fun populateWordBank(typeface: Typeface?) {
-        val padding = dpToPx(7)
-        val fontSize = dpToPx(8).toFloat()
-        val textColor = ContextCompat.getColor(this, R.color.white)
+        val padding = spToPx(7f)
+        val fontSize = spToPx(8f).toFloat()
+        val textColor = wordBankTextColor ?: ContextCompat.getColor(this, R.color.white)
 
         wordBank.forEach {
             val text = TextView(this)
@@ -383,7 +392,7 @@ class GameActivity : AppCompatActivity() {
      * Populates the letters in the layout of the word search board
      */
     private fun populateWordSearchBoard(typeface: Typeface?) {
-        val fontSize = dpToPx(9).toFloat()
+        val fontSize = spToPx(9f).toFloat()
         val textColor = ContextCompat.getColor(this, R.color.colorDarkGray)
 
         wordSearchLetters.forEachIndexed { index, letter ->

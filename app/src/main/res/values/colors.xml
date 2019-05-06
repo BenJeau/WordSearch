@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#e0e0e0</color>
-    <color name="colorPrimaryDark">#aeaeae</color>
+    <color name="colorPrimary">#eeeeee</color>
+    <color name="colorPrimaryDark">#C0C0C0</color>
     <color name="colorAccent">#94CE92</color>
     <color name="colorFadedButton">#C9DCC8</color>
     <color name="colorText">#575757</color>
     <color name="colorDarkGray">#444444</color>
+    <color name="bigButtonText">#587b57</color>
+    <color name="bigButtonSelectText">#587b57</color>
     <color name="white">#FFFFFF</color>
 </resources>
