@@ -50,7 +50,7 @@ class GameActivity : AppCompatActivity() {
     /**
      * The link between the words of the word bank and indexes of their letters in the board
      */
-    private lateinit var wordBankSearch: MutableMap<String, ArrayList<Int>>
+    private lateinit var wordBankSearch: HashMap<String, ArrayList<Int>>
 
     /**
      * The state of the letters. The numbers represents
@@ -81,15 +81,40 @@ class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
-        initialSetup()
+
+        if (savedInstanceState != null) {
+            wordBank = savedInstanceState.getStringArrayList("wordBank") as ArrayList
+            wordSearchLetters = savedInstanceState.getStringArrayList("wordSearchLetters") as ArrayList
+            wordBankSearch = savedInstanceState.getSerializable("wordBankSearch") as HashMap<String, ArrayList<Int>>
+            letterStates = savedInstanceState.getIntegerArrayList("letterStates") as ArrayList
+            wordBankFound = savedInstanceState.getBooleanArray("wordBankFound").toList() as ArrayList
+        }
+        initialSetup(savedInstanceState != null)
+        if (savedInstanceState != null) {
+            score.text = savedInstanceState.getString("score")
+            chronometer.base = savedInstanceState.getLong("chronometerBase")
+            chronometer.start()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+
+        outState?.putIntegerArrayList("letterStates", letterStates)
+        outState?.putStringArrayList("wordSearchLetters", wordSearchLetters)
+        outState?.putBooleanArray("wordBankFound", wordBankFound.toBooleanArray())
+        outState?.putStringArrayList("wordBank", wordBank)
+        outState?.putSerializable("wordBankSearch", wordBankSearch)
+        outState?.putLong("chronometerBase", chronometer.base)
+        outState?.putString("score", score.text.toString())
     }
 
     /**
      * Performs the initial setup of the game
      */
-    private fun initialSetup() {
+    private fun initialSetup(rotated: Boolean) {
         setupViews()
-        setupGame()
+        setupGame(rotated)
 
         // Defines the typeface used for the TextViews programmatically inserted
         typeface = ResourcesCompat.getFont(this, R.font.actor)
@@ -147,28 +172,49 @@ class GameActivity : AppCompatActivity() {
     /**
      * Sets up a new game
      */
-    private fun setupGame() {
-        // Initializes the arrays
-        wordBankSearch = mutableMapOf()
-        wordBankFound = arrayListOf()
-        wordBank = arrayListOf()
+    private fun setupGame(rotated: Boolean) {
+        if (!rotated) {
+            // Initializes the arrays
+            wordBankSearch = hashMapOf()
+            wordBankFound = arrayListOf()
+            wordBank = arrayListOf()
 
-        // Clears the game information and start the chronometer
-        chronometer.base = SystemClock.elapsedRealtime()
-        chronometer.start()
-        score.text = "0"
+            // Clears the game information and start the chronometer
+            chronometer.base = SystemClock.elapsedRealtime()
+            chronometer.start()
+            score.text = "0"
 
-        // Clears the views to add the new words and letters
-        letters.removeAllViews()
-        wordBankLayout.removeAllViews()
+            // Clears the views to add the new words and letters
+            letters.removeAllViews()
+            wordBankLayout.removeAllViews()
 
-        // Generates the words and letters for the upcoming game
-        generateWordBank()
-        createLetters()
+            // Generates the words and letters for the upcoming game
+            generateWordBank()
+            createLetters()
+        }
 
         // Populates the TextViews for the game
         populateWordBank(typeface)
         populateWordSearchBoard(typeface)
+
+        if (rotated) {
+            letterStates.forEachIndexed { index, i ->
+                when(i) {
+                    1 -> letters.getChildAt(index).setBackgroundResource(R.drawable.letter_select)
+                    2 -> {
+                        letters.getChildAt(index).setBackgroundResource(R.drawable.letter_found)
+                        (letters.getChildAt(index) as TextView).setTextColor(ContextCompat.getColor(this, R.color.white))
+                    }
+                    3 -> letters.getChildAt(index).setBackgroundResource(R.drawable.letter_select_found)
+                }
+            }
+            wordBankFound.forEachIndexed {index, i ->
+                if (i) {
+                    val child = wordBankLayout.getChildAt(index) as TextView
+                    child.paintFlags = child.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                }
+            }
+        }
     }
 
     /**
@@ -527,7 +573,7 @@ class GameActivity : AppCompatActivity() {
      * The onClick of the Play Again button, which properly animates the view and resets the game
      */
     private fun playAgain() {
-        setupGame()
+        setupGame(false)
 
         // Animates the change of color of the board and shows the right content
         animateColorBackground(500, gameBoard, R.color.white)
