@@ -149,9 +149,7 @@ class GameActivity : AppCompatActivity() {
      */
     private fun setupGame() {
         // Initializes the arrays
-        wordSearchLetters = arrayListOf()
         wordBankSearch = mutableMapOf()
-        letterStates = arrayListOf()
         wordBankFound = arrayListOf()
         wordBank = arrayListOf()
 
@@ -195,11 +193,16 @@ class GameActivity : AppCompatActivity() {
      * Create the array of letters representing the game board
      */
     private fun createLetters() {
+        wordSearchLetters = arrayListOf()
+        letterStates = arrayListOf()
+
         // Initializes the array with empty strings and their state
         for (i in 0..99) {
             wordSearchLetters.add("")
             letterStates.add(0)
         }
+
+        var restartCreation = false
 
         // Adds words in the list of letters
         wordBank.forEach {
@@ -219,6 +222,7 @@ class GameActivity : AppCompatActivity() {
                         isHorizontal = !isHorizontal
                     } else {
                         changedOrientation = true
+                        interfere = false
                         isHorizontal = !isHorizontal
                     }
                 }
@@ -240,7 +244,8 @@ class GameActivity : AppCompatActivity() {
                         if (changedOrientation) {
                             lines.remove(line)
                             if (lines.size == 0) {
-                                // Start over TODO
+                                restartCreation = true
+                                return@forEach
                             }
                         }
                         break
@@ -262,6 +267,11 @@ class GameActivity : AppCompatActivity() {
                     }
                 }
             } while (interfere)
+        }
+
+        if (restartCreation) {
+            createLetters()
+            return
         }
 
         // Adds random letters to the spaces that are empty
