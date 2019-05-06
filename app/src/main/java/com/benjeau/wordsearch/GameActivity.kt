@@ -15,18 +15,22 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
+import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.SystemClock
+import android.util.Log
 import android.view.MotionEvent
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import java.util.*
 import com.google.android.gms.common.images.ImageManager
 import com.google.android.gms.games.Games
+import com.google.android.gms.games.GamesClient
 
 class GameActivity : AppCompatActivity() {
 
@@ -165,17 +169,25 @@ class GameActivity : AppCompatActivity() {
         typeface = ResourcesCompat.getFont(this, R.font.actor)
 
         val playAgainIcon: ImageButton = findViewById(R.id.playAgainIcon)
-        playAgainIcon.setOnClickListener { setupGame(false) }
+        playAgainIcon.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Create New Game")
+                .setMessage("You will lose all of your progress")
+                .setPositiveButton(android.R.string.yes) { _, _ ->
+                    setupGame(false)
+                }
+                .setNegativeButton(android.R.string.no, null)
+                .show()
+        }
 
         // Sets the profile picture and fetches a dummy profile picture if the user is not signed in
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
 
-        val uri = getSharedPrefString("profilePictureURI")
-        if (uri == null) {
-            profileIcon.setImageResource(R.drawable.profile_pic_placeholder)
-        } else {
+        val uri = getSharedPrefString("profileIconURI")
+        if (uri != null) {
+            profileIcon.setPadding(0,0,0,0)
             val imageManager = ImageManager.create(this)
-            imageManager.loadImage(profileIcon, Uri.parse(uri), R.drawable.profile_pic_placeholder)
+            imageManager.loadImage(profileIcon, Uri.parse(uri))
         }
 
         // Sets the profile name if signed in
@@ -189,11 +201,17 @@ class GameActivity : AppCompatActivity() {
             lastName.text = name.last()
         }
 
-        val swatch = createPaletteSync((profileIcon.drawable as BitmapDrawable).bitmap).vibrantSwatch
-        if (swatch != null) {
-            wordBankLayout.setBackgroundColor(swatch.rgb)
-            wordBankTextColor = swatch.bodyTextColor
-        }
+        
+//        profileIcon.addOnLayoutChangeListener{ v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+//            if (profileIcon.drawable is BitmapDrawable) {
+//                val swatch = createPaletteSync((profileIcon.drawable as BitmapDrawable).bitmap).vibrantSwatch
+//                if (swatch != null) {
+//                    wordBankLayout.setBackgroundColor(swatch.rgb)
+//                    wordBankTextColor = swatch.bodyTextColor
+//                }
+//            }
+//        }
+
 
         // Sets action for the home button
         val homeIcon: ImageButton = findViewById(R.id.homeIcon)
@@ -220,6 +238,12 @@ class GameActivity : AppCompatActivity() {
         gameBoardFinished = findViewById(R.id.gameBoardFinished)
         gameInfo = findViewById(R.id.gameInfo)
         gameBoard = findViewById(R.id.gameBoard)
+
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        if (account != null) {
+            val gamesClient = Games.getGamesClient(this@GameActivity, account)
+            gamesClient.setViewForPopups(findViewById(R.id.gps_popup))
+        }
     }
 
     /**
@@ -706,7 +730,7 @@ class GameActivity : AppCompatActivity() {
         System.out.println("Account $account")
         if (account != null) {
             Games.getAchievementsClient(this, account)
-                .unlock(getString(R.string.achievement_you_fast))
+                .unlock(getString(R.string.achievement_tester))
         }
     }
 

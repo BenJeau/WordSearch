@@ -17,6 +17,9 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
+            android:src="@drawable/ic_games_controller_black_40dp"
+            android:tint="@color/colorDarkGray"
+            android:padding="10dp"
             android:id="@+id/profileIcon"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

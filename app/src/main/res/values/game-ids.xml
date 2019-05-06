@@ -8,4 +8,8 @@
     <string name="achievement_you_fast" translatable="false">CgkIy_zksvgBEAIQAQ</string>
     <!-- achievement You beat yourself! -->
     <string name="achievement_you_beat_yourself" translatable="false">CgkIy_zksvgBEAIQAg</string>
+    <!-- achievement test -->
+    <string name="achievement_test" translatable="false">CgkIy_zksvgBEAIQBA</string>
+    <!-- achievement tester -->
+    <string name="achievement_tester" translatable="false">CgkIy_zksvgBEAIQBQ</string>
 </resources>

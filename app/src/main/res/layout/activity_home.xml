@@ -7,10 +7,7 @@
     android:layout_height="match_parent"
     android:clipToPadding="false"
     android:backgroundTint="@color/colorPrimary"
-    android:paddingTop="20dp"
-    android:paddingStart="20dp"
-    android:paddingEnd="20dp"
-    android:paddingBottom="10dp"
+    android:padding="20dp"
     tools:context=".HomeActivity">
 
     <include
@@ -85,7 +82,6 @@
             android:id="@+id/highScoreTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
             android:fontFamily="@font/actor"
             android:text="@string/best_time"
             android:textAlignment="center"
@@ -106,17 +102,6 @@
             app:layout_constraintBottom_toBottomOf="@id/highScoreTitle"
             app:layout_constraintLeft_toRightOf="@id/highScoreTitle" />
 
-        <ImageButton
-            android:id="@+id/googlePlayButton"
-            style="@style/Base.Widget.AppCompat.Button.Borderless"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/google_play_games_description"
-            android:src="@drawable/ic_games_controller_black_40dp"
-            android:tint="@drawable/icon_button_selector"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintRight_toRightOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

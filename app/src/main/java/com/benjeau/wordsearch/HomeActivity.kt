@@ -34,11 +34,17 @@ class HomeActivity : AppCompatActivity() {
         }
 
         // Shows prompt to sign in Google Play Games
-        val googlePlayIcon: ImageButton = findViewById(R.id.googlePlayButton)
-        googlePlayIcon.setOnClickListener{
-            val signInOptions = GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
-            val signInClient = GoogleSignIn.getClient(this, signInOptions)
-            startActivityForResult(signInClient.signInIntent, 5)
+        val profileLayout: ConstraintLayout = findViewById(R.id.profilePicture)
+        profileLayout.setOnClickListener{
+            val account = GoogleSignIn.getLastSignedInAccount(this)
+
+            if (account != null && GoogleSignIn.hasPermissions(account)) {
+
+            } else {
+                val signInOptions = GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
+                val signInClient = GoogleSignIn.getClient(this, signInOptions)
+                startActivityForResult(signInClient.signInIntent, 5)
+            }
         }
     }
 
@@ -54,12 +60,6 @@ class HomeActivity : AppCompatActivity() {
      * Puts the information about the signed in user, if the user is signed in Google Play Games
      */
     private fun checkProfile() {
-        val profilePicture: ConstraintLayout = findViewById(R.id.profilePicture)
-        profilePicture.setOnClickListener{
-            signOut()
-            checkProfile()
-        }
-
         // Set dummy profile picture
         val profileIcon: ImageView = findViewById(R.id.profileIcon)
         val firstName: TextView = findViewById(R.id.firstName)
@@ -67,11 +67,9 @@ class HomeActivity : AppCompatActivity() {
 
         val uri = getSharedPrefString("profileIconURI")
         if (uri != null) {
+            profileIcon.setPadding(0,0,0,0)
             val mgr = ImageManager.create(this)
             mgr.loadImage(profileIcon, Uri.parse(uri))
-            profilePicture.alpha = 1f
-        } else {
-            profilePicture.alpha = 0f
         }
 
         val profileName = getSharedPrefString("profileName")
