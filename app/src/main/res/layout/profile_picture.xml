@@ -11,7 +11,7 @@
         android:layout_height="50dp"
         android:layout_margin="5dp"
         app:cardCornerRadius="25dp"
-        app:cardElevation="5dp"
+        app:cardElevation="3dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent">

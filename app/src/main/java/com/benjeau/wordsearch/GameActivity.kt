@@ -23,8 +23,10 @@ import android.view.MotionEvent
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
 import androidx.core.content.ContextCompat
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import java.util.*
 import com.google.android.gms.common.images.ImageManager
+import com.google.android.gms.games.Games
 
 class GameActivity : AppCompatActivity() {
 
@@ -75,6 +77,9 @@ class GameActivity : AppCompatActivity() {
      */
     private var typeface: Typeface? = null
 
+    private var gameInfoHeight: Int? = null
+    private var elapsedSeconds: Int = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
@@ -85,12 +90,48 @@ class GameActivity : AppCompatActivity() {
             wordBankSearch = savedInstanceState.getSerializable("wordBankSearch") as HashMap<String, ArrayList<Int>>
             letterStates = savedInstanceState.getIntegerArrayList("letterStates") as ArrayList
             wordBankFound = savedInstanceState.getBooleanArray("wordBankFound")?.toCollection(ArrayList()) ?: arrayListOf()
+            elapsedSeconds = savedInstanceState.getInt("elapsedSeconds")
         }
         initialSetup(savedInstanceState != null)
         if (savedInstanceState != null) {
             score.text = savedInstanceState.getString("score")
             chronometer.base = savedInstanceState.getLong("chronometerBase")
             chronometer.start()
+
+            if (!wordBankFound.contains(false)) {
+                gameInfo.visibility = View.GONE
+
+                gameBoardContent.visibility = View.GONE
+                gameBoardContent.alpha = 0f
+
+                gameBoardFinished.visibility = View.VISIBLE
+                gameBoardFinished.alpha = 1f
+
+                gameBoard.setCardBackgroundColor(ContextCompat.getColor(this, R.color.colorAccent))
+
+                val finishDescription: TextView = findViewById(R.id.finishDescription)
+                finishDescription.text = String.format(resources.getString(R.string.finished_message), elapsedSeconds)
+            } else {
+                letterStates.forEachIndexed { index, i ->
+                    when(i) {
+                        1 -> letters.getChildAt(index).setBackgroundResource(R.drawable.letter_select)
+                        2 -> {
+                            letters.getChildAt(index).setBackgroundResource(R.drawable.letter_found)
+                            (letters.getChildAt(index) as TextView).setTextColor(ContextCompat.getColor(this, R.color.white))
+                        }
+                        3 -> {
+                            letters.getChildAt(index).setBackgroundResource(R.drawable.letter_select_found)
+                            (letters.getChildAt(index) as TextView).setTextColor(ContextCompat.getColor(this, R.color.white))
+                        }
+                    }
+                }
+                wordBankFound.forEachIndexed {index, i ->
+                    if (i) {
+                        val child = wordBankLayout.getChildAt(index) as TextView
+                        child.paintFlags = child.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                    }
+                }
+            }
         }
     }
 
@@ -104,6 +145,7 @@ class GameActivity : AppCompatActivity() {
         outState?.putSerializable("wordBankSearch", wordBankSearch)
         outState?.putLong("chronometerBase", chronometer.base)
         outState?.putString("score", score.text.toString())
+        outState?.putInt("elapsedSeconds", elapsedSeconds)
     }
 
     /**
@@ -112,6 +154,11 @@ class GameActivity : AppCompatActivity() {
     private fun initialSetup(rotated: Boolean) {
         setupViews()
         setupGame(rotated)
+
+        gameInfo.post {
+            gameInfo.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+            gameInfoHeight = gameInfo.measuredHeight
+        }
 
         // Defines the typeface used for the TextViews programmatically inserted
         typeface = ResourcesCompat.getFont(this, R.font.actor)
@@ -193,28 +240,6 @@ class GameActivity : AppCompatActivity() {
         // Populates the TextViews for the game
         populateWordBank(typeface)
         populateWordSearchBoard(typeface)
-
-        if (rotated) {
-            letterStates.forEachIndexed { index, i ->
-                when(i) {
-                    1 -> letters.getChildAt(index).setBackgroundResource(R.drawable.letter_select)
-                    2 -> {
-                        letters.getChildAt(index).setBackgroundResource(R.drawable.letter_found)
-                        (letters.getChildAt(index) as TextView).setTextColor(ContextCompat.getColor(this, R.color.white))
-                    }
-                    3 -> {
-                        letters.getChildAt(index).setBackgroundResource(R.drawable.letter_select_found)
-                        (letters.getChildAt(index) as TextView).setTextColor(ContextCompat.getColor(this, R.color.white))
-                    }
-                }
-            }
-            wordBankFound.forEachIndexed {index, i ->
-                if (i) {
-                    val child = wordBankLayout.getChildAt(index) as TextView
-                    child.paintFlags = child.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                }
-            }
-        }
     }
 
     /**
@@ -586,7 +611,8 @@ class GameActivity : AppCompatActivity() {
         animateShow(gameBoardContent)
 
         // Animates the height change of the game information top section and the game board
-        val anim = ValueAnimator.ofInt(0, 143)
+        val height = gameInfoHeight ?: 0
+        val anim = ValueAnimator.ofInt(0, height)
         val topPadding = dpToPx(20)
         anim.addUpdateListener { valueAnimator ->
             val `val` = valueAnimator.animatedValue as Int
@@ -594,7 +620,7 @@ class GameActivity : AppCompatActivity() {
             layoutParams.height = `val`
             layoutParams.setMargins(
                 0,
-                ((`val`.toFloat() / 143.0) * topPadding.toFloat()).toInt(),
+                ((`val`.toFloat() / height) * topPadding.toFloat()).toInt(),
                 0,
                 0
             )
@@ -605,7 +631,7 @@ class GameActivity : AppCompatActivity() {
             override
             fun onAnimationEnd(animation: Animator) {
                 val layoutParams = gameInfo.layoutParams
-                layoutParams.height = 143
+                layoutParams.height = height
                 gameInfo.layoutParams = layoutParams
             }
         })
@@ -621,7 +647,7 @@ class GameActivity : AppCompatActivity() {
         // Stops the chronometer, get the elapsed seconds and displays it
         chronometer.stop()
 
-        val elapsedSeconds = (SystemClock.elapsedRealtime() - chronometer.base) / 1000
+        elapsedSeconds = ((SystemClock.elapsedRealtime() - chronometer.base) / 1000).toInt()
 
         val finishDescription: TextView = findViewById(R.id.finishDescription)
         finishDescription.text = String.format(resources.getString(R.string.finished_message), elapsedSeconds)
@@ -639,7 +665,8 @@ class GameActivity : AppCompatActivity() {
         animateShow(gameBoardFinished)
 
         // Animates the height change of the game information top section and the game board
-        val anim = ValueAnimator.ofInt(gameInfo.measuredHeight, 0)
+        val height = gameInfoHeight ?: 0
+        val anim = ValueAnimator.ofInt(height, 0)
         val topPadding = (gameInfo.layoutParams as ConstraintLayout.LayoutParams).topMargin
         anim.addUpdateListener { valueAnimator ->
             val `val` = valueAnimator.animatedValue as Int
@@ -647,7 +674,7 @@ class GameActivity : AppCompatActivity() {
             layoutParams.height = `val`
             layoutParams.setMargins(
                 0,
-                ((`val`.toFloat() / 143.0) * topPadding.toFloat()).toInt(),
+                ((`val`.toFloat() / height) * topPadding.toFloat()).toInt(),
                 0,
                 0
             )
@@ -665,6 +692,13 @@ class GameActivity : AppCompatActivity() {
         anim.duration = 500
         anim.interpolator = AccelerateDecelerateInterpolator()
         anim.start()
+
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        System.out.println("Account $account")
+        if (account != null) {
+            Games.getAchievementsClient(this, account)
+                .unlock(getString(R.string.achievement_you_fast))
+        }
     }
 
     /**

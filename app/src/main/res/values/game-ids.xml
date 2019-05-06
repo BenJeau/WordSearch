@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- app_id -->
+    <string name="app_id" translatable="false">66678505035</string>
+    <!-- package_name -->
+    <string name="package_name" translatable="false">com.benjeau.wordsearch</string>
+    <!-- achievement You fast! -->
+    <string name="achievement_you_fast" translatable="false">CgkIy_zksvgBEAIQAQ</string>
+    <!-- achievement You beat yourself! -->
+    <string name="achievement_you_beat_yourself" translatable="false">CgkIy_zksvgBEAIQAg</string>
+</resources>
