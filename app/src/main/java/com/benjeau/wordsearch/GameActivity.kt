@@ -84,7 +84,7 @@ class GameActivity : AppCompatActivity() {
             wordSearchLetters = savedInstanceState.getStringArrayList("wordSearchLetters") as ArrayList
             wordBankSearch = savedInstanceState.getSerializable("wordBankSearch") as HashMap<String, ArrayList<Int>>
             letterStates = savedInstanceState.getIntegerArrayList("letterStates") as ArrayList
-            wordBankFound = savedInstanceState.getBooleanArray("wordBankFound")?.toList() as ArrayList
+            wordBankFound = savedInstanceState.getBooleanArray("wordBankFound")?.toCollection(ArrayList()) ?: arrayListOf()
         }
         initialSetup(savedInstanceState != null)
         if (savedInstanceState != null) {
@@ -233,6 +233,8 @@ class GameActivity : AppCompatActivity() {
         wordBank.add(OPTIONAL_WORDS[secondRandom])
 
         wordBank.sortByDescending {it.length}
+
+        (0 until wordBank.size).forEach {wordBankFound.add(false) }
     }
 
     /**
@@ -342,7 +344,6 @@ class GameActivity : AppCompatActivity() {
         wordBank.forEach {
             val text = TextView(this)
             text.text = it
-            wordBankFound.add(false)
             wordBankLayout.addView(text)
             text.setTextColor(textColor)
             text.setPadding(padding, padding, padding, padding)
