@@ -17,13 +17,17 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
+import android.graphics.Rect
 import android.net.Uri
 import android.os.SystemClock
+import android.util.Log
+import android.view.MotionEvent
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
 import androidx.core.content.ContextCompat
 import java.util.*
 import com.google.android.gms.common.images.ImageManager
+import org.w3c.dom.Text
 
 class GameActivity : AppCompatActivity() {
 
@@ -77,9 +81,7 @@ class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
-
         initialSetup()
-        finishedGame()
     }
 
     /**
@@ -299,7 +301,7 @@ class GameActivity : AppCompatActivity() {
      * Populates the letters in the layout of the word search board
      */
     private fun populateWordSearchBoard(typeface: Typeface?) {
-        val fontSize = dpToPx(10).toFloat()
+        val fontSize = dpToPx(9).toFloat()
         val textColor = ContextCompat.getColor(this, R.color.colorDarkGray)
 
         wordSearchLetters.forEachIndexed { index, letter ->
@@ -311,7 +313,94 @@ class GameActivity : AppCompatActivity() {
             text.typeface = typeface
             text.gravity = Gravity.CENTER
             text.setTextColor(textColor)
-            text.setOnClickListener { letterOnClick(index, text) }
+            text.setOnTouchListener { v, event ->
+                val x = event.x
+                val y = event.y
+                val height = v.height
+                val width = v.width
+                val inXRange = x in (0..width)
+                val inYRange = y in (0..height)
+
+                when(event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        letterOnClick(index, text)
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        checkIfWordSelected()
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        if (inYRange && !inXRange || !inYRange && inXRange) {
+                                val xoff = Math.floor((x / width).toDouble()).toInt()
+                                val yoff = Math.floor((y / height).toDouble()).toInt()
+
+                                letterStates.forEachIndexed { index, i ->
+                                    if (i == 1 || i == 3) {
+                                        letterStates[index]--
+
+                                        if (i == 1) {
+                                            letters.getChildAt(index).setBackgroundResource(0)
+                                        } else {
+                                            letters.getChildAt(index).setBackgroundResource(R.drawable.letter_found)
+                                        }
+                                    }
+                                }
+                                if (inYRange){
+                                    val indexesToChange: ArrayList<Int> = arrayListOf()
+                                    val yLine = Math.floor(index / 10.toDouble())
+
+                                    if (xoff < 0) {
+                                        (xoff..0).forEach{
+                                            val newIndex = index + it
+                                            val newYLine = Math.floor(newIndex / 10.toDouble())
+                                            if (newIndex in (0..99) && yLine == newYLine) indexesToChange.add(newIndex)
+                                        }
+                                    } else {
+                                        (0..xoff).forEach{
+                                            val newIndex = index + it
+                                            val newYLine = Math.floor(newIndex / 10.toDouble())
+                                            if (newIndex in (0..99) && yLine == newYLine) indexesToChange.add(newIndex)
+                                        }
+                                    }
+
+                                    indexesToChange.forEach {
+                                        if (letterStates[it] == 0) {
+                                            letters.getChildAt(it).setBackgroundResource(R.drawable.letter_select)
+                                            letterStates[it] = 1
+                                        } else if (letterStates[it] == 2){
+                                            letters.getChildAt(it).setBackgroundResource(R.drawable.letter_select_found)
+                                            letterStates[it] = 3
+                                        }
+                                    }
+                                } else {
+                                    val indexesToChange: ArrayList<Int> = arrayListOf()
+
+                                    if (yoff < 0) {
+                                        (yoff .. 0).forEach{
+                                            val newIndex = index + 10 * it
+                                            if (newIndex in (0..99)) indexesToChange.add(newIndex)
+                                        }
+                                    } else {
+                                        (0 .. yoff).forEach{
+                                            val newIndex = index + 10 * it
+                                            if (newIndex in (0..99)) indexesToChange.add(newIndex)
+                                        }
+                                    }
+
+                                    indexesToChange.forEach {
+                                        if (letterStates[it] == 0) {
+                                            letters.getChildAt(it).setBackgroundResource(R.drawable.letter_select)
+                                            letterStates[it] = 1
+                                        } else if (letterStates[it] == 2){
+                                            letters.getChildAt(it).setBackgroundResource(R.drawable.letter_select_found)
+                                            letterStates[it] = 3
+                                        }
+                                    }
+                                }
+                        }
+                    }
+                }
+                true
+            }
             (text.layoutParams as FlexboxLayout.LayoutParams).flexBasisPercent = 0.0875f
         }
     }
@@ -371,33 +460,51 @@ class GameActivity : AppCompatActivity() {
                 // Restricts the user to only select letters from the same line
                 val sameLine = (if (isHorizontal) Math.floor(index / 10.toDouble()).toInt() else index % 10) == lineNumber
                 val before = currentOffset == firstOffset - 1
-                val after = currentOffset == lastOffset +1
+                val after = currentOffset == lastOffset + 1
                 changeState = sameLine && ( before|| after) || letterStates[index] == 1|| letterStates[index] == 3
             }
         }
 
-        // Updates the view of the letter according its previous state and updates the state
-        if (changeState) {
-            when {
-                letterStates[index] == 0 -> {
-                    view.setBackgroundResource(R.drawable.letter_select)
-                    letterStates[index]++
-                }
-                letterStates[index] == 2 -> {
-                    view.setBackgroundResource(R.drawable.letter_select_found)
-                    letterStates[index]++
-                }
-                else -> {
-                    if (letterStates[index] == 1) {
-                        view.setBackgroundResource(0)
-                    } else {
-                        view.setBackgroundResource(R.drawable.letter_found)
-                    }
+        // Removes every other letter selected if the selected letter does not respect the rules
+        // described above
+        if (!changeState) {
+            letterStates.forEachIndexed { index, i ->
+                if (i == 1 || i == 3) {
                     letterStates[index]--
+
+                    if (i == 1) {
+                        letters.getChildAt(index).setBackgroundResource(0)
+                    } else {
+                        letters.getChildAt(index).setBackgroundResource(R.drawable.letter_found)
+                    }
                 }
             }
         }
 
+        // Updates the view of the letter according its previous state and updates the state
+        when {
+            letterStates[index] == 0 -> {
+                view.setBackgroundResource(R.drawable.letter_select)
+                letterStates[index]++
+            }
+            letterStates[index] == 2 -> {
+                view.setBackgroundResource(R.drawable.letter_select_found)
+                letterStates[index]++
+            }
+            else -> {
+                if (letterStates[index] == 1) {
+                    view.setBackgroundResource(0)
+                } else {
+                    view.setBackgroundResource(R.drawable.letter_found)
+                }
+                letterStates[index]--
+            }
+        }
+
+        checkIfWordSelected()
+    }
+
+    private fun checkIfWordSelected() {
         // Checks if there is a word found
         val selectedIndexes = letterStates.withIndex().filter { it.value == 1 || it.value == 3 }. map { it.index }
         val wordFound = wordBankSearch.filterValues { Arrays.equals(it.toIntArray(), selectedIndexes.toIntArray()) }
