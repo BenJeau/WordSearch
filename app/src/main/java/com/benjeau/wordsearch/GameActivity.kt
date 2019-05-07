@@ -15,12 +15,8 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
-import android.content.DialogInterface
-import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.SystemClock
-import android.util.Log
 import android.view.MotionEvent
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
@@ -30,7 +26,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import java.util.*
 import com.google.android.gms.common.images.ImageManager
 import com.google.android.gms.games.Games
-import com.google.android.gms.games.GamesClient
 
 class GameActivity : AppCompatActivity() {
 
@@ -89,6 +84,7 @@ class GameActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
 
+        // Restores the data of view after rotation
         if (savedInstanceState != null) {
             wordBank = savedInstanceState.getStringArrayList("wordBank") as ArrayList
             wordSearchLetters = savedInstanceState.getStringArrayList("wordSearchLetters") as ArrayList
@@ -97,12 +93,17 @@ class GameActivity : AppCompatActivity() {
             wordBankFound = savedInstanceState.getBooleanArray("wordBankFound")?.toCollection(ArrayList()) ?: arrayListOf()
             elapsedSeconds = savedInstanceState.getInt("elapsedSeconds")
         }
+
         initialSetup(savedInstanceState != null)
+
+        // Properly sets up the view according to the data before rotation
         if (savedInstanceState != null) {
+            // Sets the score and chronometer
             score.text = savedInstanceState.getString("score")
             chronometer.base = savedInstanceState.getLong("chronometerBase")
             chronometer.start()
 
+            // Strikethrough the found words
             wordBankFound.forEachIndexed {index, i ->
                 if (i) {
                     val child = wordBankLayout.getChildAt(index) as TextView
@@ -110,6 +111,7 @@ class GameActivity : AppCompatActivity() {
                 }
             }
 
+            // Checks if the game is finished
             if (!wordBankFound.contains(false)) {
                 gameInfo.visibility = View.GONE
 
@@ -124,6 +126,7 @@ class GameActivity : AppCompatActivity() {
                 val finishDescription: TextView = findViewById(R.id.finishDescription)
                 finishDescription.text = String.format(resources.getString(R.string.finished_message), elapsedSeconds)
             } else {
+                // Restores the view of the letters' background and text color
                 letterStates.forEachIndexed { index, i ->
                     when(i) {
                         1 -> letters.getChildAt(index).setBackgroundResource(R.drawable.letter_select)
@@ -144,6 +147,7 @@ class GameActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
 
+        // Saves the state of the view before rotation
         outState?.putIntegerArrayList("letterStates", letterStates)
         outState?.putStringArrayList("wordSearchLetters", wordSearchLetters)
         outState?.putBooleanArray("wordBankFound", wordBankFound.toBooleanArray())
@@ -160,6 +164,7 @@ class GameActivity : AppCompatActivity() {
     private fun initialSetup(rotated: Boolean) {
         setupViews()
 
+        // Gets the height of the gameInfo layout for animating it
         gameInfo.post {
             gameInfo.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
             gameInfoHeight = gameInfo.measuredHeight
@@ -168,6 +173,7 @@ class GameActivity : AppCompatActivity() {
         // Defines the typeface used for the TextViews programmatically inserted
         typeface = ResourcesCompat.getFont(this, R.font.actor)
 
+        // Shows an alert and allows the user to restart the game
         val playAgainIcon: ImageButton = findViewById(R.id.playAgainIcon)
         playAgainIcon.setOnClickListener {
             AlertDialog.Builder(this)
@@ -201,7 +207,6 @@ class GameActivity : AppCompatActivity() {
             lastName.text = name.last()
         }
 
-        
 //        profileIcon.addOnLayoutChangeListener{ v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
 //            if (profileIcon.drawable is BitmapDrawable) {
 //                val swatch = createPaletteSync((profileIcon.drawable as BitmapDrawable).bitmap).vibrantSwatch
@@ -211,7 +216,6 @@ class GameActivity : AppCompatActivity() {
 //                }
 //            }
 //        }
-
 
         // Sets action for the home button
         val homeIcon: ImageButton = findViewById(R.id.homeIcon)
@@ -239,6 +243,7 @@ class GameActivity : AppCompatActivity() {
         gameInfo = findViewById(R.id.gameInfo)
         gameBoard = findViewById(R.id.gameBoard)
 
+        // Allows the achievements pop-ups to show
         val account = GoogleSignIn.getLastSignedInAccount(this)
         if (account != null) {
             val gamesClient = Games.getGamesClient(this@GameActivity, account)
@@ -292,23 +297,25 @@ class GameActivity : AppCompatActivity() {
 
         wordBank.sortByDescending {it.length}
 
-        (0 until wordBank.size).forEach {wordBankFound.add(false) }
+        repeat(wordBank.size) { wordBankFound.add(false) }
     }
 
     /**
      * Create the array of letters representing the game board
+     *
+     * Note: If I would have more time, I would create a better algorithm which relies less on
+     *     on the randomness of the location of the words
      */
     private fun createLetters() {
         wordSearchLetters = arrayListOf()
         letterStates = arrayListOf()
+        var restartCreation = false
 
         // Initializes the array with empty strings and their state
         for (i in 0..99) {
             wordSearchLetters.add("")
             letterStates.add(0)
         }
-
-        var restartCreation = false
 
         // Adds words in the list of letters
         wordBank.forEach {
@@ -375,6 +382,7 @@ class GameActivity : AppCompatActivity() {
             } while (interfere)
         }
 
+        // If the is no place to put the other letters, try again
         if (restartCreation) {
             createLetters()
             return
@@ -436,6 +444,10 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * The onTouchListener for the letters' TextViews dealing with the tapping and swiping over the
+     * letters
+     */
     private fun letterOnTouch(index: Int, view: TextView, event: MotionEvent) {
         val x = event.x
         val y = event.y
@@ -623,8 +635,10 @@ class GameActivity : AppCompatActivity() {
         checkIfWordSelected()
     }
 
+    /**
+     * Verifies if the user has selected a word, if so call foundWord() with that word
+     */
     private fun checkIfWordSelected() {
-        // Checks if there is a word found
         val selectedIndexes = letterStates.withIndex().filter { it.value == 1 || it.value == 3 }. map { it.index }
         val wordFound = wordBankSearch.filterValues { Arrays.equals(it.toIntArray(), selectedIndexes.toIntArray()) }
         if (wordFound.isNotEmpty()) {
@@ -671,6 +685,7 @@ class GameActivity : AppCompatActivity() {
         anim.duration = 500
         anim.interpolator = AccelerateDecelerateInterpolator()
         anim.start()
+
     }
 
     /**
@@ -687,7 +702,7 @@ class GameActivity : AppCompatActivity() {
 
         // Updates the best time if the time is better than the previous one
         var bestTime = getSharedPrefString("bestTime") ?: ""
-        if (bestTime == "" || bestTime.toInt() > elapsedSeconds.toInt()) {
+        if (bestTime == "" || bestTime.toInt() > elapsedSeconds) {
             bestTime = elapsedSeconds.toString()
         }
         storeSharedPref("bestTime", bestTime)
@@ -727,7 +742,6 @@ class GameActivity : AppCompatActivity() {
         anim.start()
 
         val account = GoogleSignIn.getLastSignedInAccount(this)
-        System.out.println("Account $account")
         if (account != null) {
             Games.getAchievementsClient(this, account)
                 .unlock(getString(R.string.achievement_tester))
@@ -762,26 +776,6 @@ class GameActivity : AppCompatActivity() {
             letter.setBackgroundResource(R.drawable.letter_found)
             letter.setTextColor(ContextCompat.getColor(this, R.color.white))
         }
-    }
-
-    /**
-     * Helper function to show the specified view while animating it
-     *
-     * @param view The view to animate
-     */
-    private fun animateShow(view: View) {
-        view.visibility = View.VISIBLE
-        view.animate().alpha(1.0f)
-    }
-
-    /**
-     * Helper function to hide the specified view while animating it
-     *
-     * @param view The view to animate
-     */
-    private fun animateHide(view: View) {
-        view.animate().alpha(0.0f)
-        view.visibility = View.GONE
     }
 
     /**

@@ -16,4 +16,5 @@
     <string name="time">Time</string>
     <string name="checkmark">Checkmark</string>
     <string name="finished_message">Completed the game in %1$s seconds!</string>
+    <string name="sign_out">Sign Out</string>
 </resources>

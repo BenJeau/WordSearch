@@ -4,128 +4,134 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.content.Intent
-import android.widget.ImageButton
 import android.widget.TextView
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import android.app.AlertDialog
 import android.net.Uri
+import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.common.images.ImageManager
 import com.google.android.gms.games.Games
-import com.google.android.gms.games.Player
 
 class HomeActivity : AppCompatActivity() {
+
+    /**
+     * References to the views in the layout
+     */
+    private lateinit var highScoreText: TextView
+    private lateinit var profileIcon: ImageView
+    private lateinit var firstName: TextView
+    private lateinit var lastName: TextView
+    private lateinit var signOutButton: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        checkProfile()
-        updateBestTime()
+        setUpViews()
+        updateProfileInfo()
 
         // Goes to the next screen (game)
         val playGame: Button = findViewById(R.id.playGame)
-        playGame.setOnClickListener{
+        playGame.setOnClickListener {
             val myIntent = Intent(this, GameActivity::class.java)
             startActivity(myIntent)
         }
 
         // Shows prompt to sign in Google Play Games
         val profileLayout: ConstraintLayout = findViewById(R.id.profilePicture)
-        profileLayout.setOnClickListener{
-            val account = GoogleSignIn.getLastSignedInAccount(this)
-
-            if (account != null && GoogleSignIn.hasPermissions(account)) {
-
-            } else {
-                val signInOptions = GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
-                val signInClient = GoogleSignIn.getClient(this, signInOptions)
-                startActivityForResult(signInClient.signInIntent, 5)
-            }
+        profileLayout.setOnClickListener {
+            profileOnClick()
         }
+
+        signOutButton.setOnClickListener { googlePlaySignOut() }
+    }
+
+    /**
+     * Create references to the views often used
+     */
+    private fun setUpViews() {
+        highScoreText = findViewById(R.id.highScore)
+        profileIcon = findViewById(R.id.profileIcon)
+        firstName = findViewById(R.id.firstName)
+        lastName = findViewById(R.id.lastName)
+        signOutButton = findViewById(R.id.signOut)
     }
 
     /**
      * Gets the value of the best time from shared preferences and displays it
      */
     private fun updateBestTime() {
-        val highScoreText: TextView = findViewById(R.id.highScore)
-        highScoreText.text = if (getSharedPrefString("bestTime") == null) "N.A." else getSharedPrefString("bestTime") + " s."
+        highScoreText.text = if (getSharedPrefString("bestTime") == null) {
+            "N.A."
+        } else {
+            getSharedPrefString("bestTime") + " s."
+        }
     }
 
     /**
      * Puts the information about the signed in user, if the user is signed in Google Play Games
      */
-    private fun checkProfile() {
-        // Set dummy profile picture
-        val profileIcon: ImageView = findViewById(R.id.profileIcon)
-        val firstName: TextView = findViewById(R.id.firstName)
-        val lastName: TextView = findViewById(R.id.lastName)
-
+    private fun updateProfileInfo() {
+        // Updates the profile icon
         val uri = getSharedPrefString("profileIconURI")
         if (uri != null) {
-            profileIcon.setPadding(0,0,0,0)
+            profileIcon.setPadding(0, 0, 0, 0)
             val mgr = ImageManager.create(this)
             mgr.loadImage(profileIcon, Uri.parse(uri))
+        } else {
+            val profileMargin = dpToPx(10)
+            profileIcon.setPadding(profileMargin, profileMargin, profileMargin, profileMargin)
+            profileIcon.setImageResource(R.drawable.ic_games_controller_black_40dp)
         }
 
+        // Sets up the profile name
         val profileName = getSharedPrefString("profileName")
         if (profileName != null) {
             val name = profileName.split(" ")
             firstName.text = name[0]
             lastName.text = name[1]
+        } else {
+            firstName.text = getString(R.string.first_name_placeholder)
+            lastName.text = getString(R.string.last_name_placeholder)
         }
-    }
 
-    private fun signOut() {
-        val signInClient = GoogleSignIn.getClient(this,
-        GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN)
-        signInClient.signOut().addOnCompleteListener(this
-        ) {
-            storeSharedPref("profileIconURI", null)
-            storeSharedPref("profileName", null)
+        // Shows the logout button if the user is logged in
+        if (profileName != null || uri != null) {
+            animateShow(signOutButton)
+        } else {
+            animateHide(signOutButton)
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 5) {
+
+        if (requestCode == signInRequestCode) {
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
-            System.out.println(resultCode)
-            if (result.isSuccess) {
-                // The signed in account is stored in the result.
-                val signedInAccount = result.signInAccount
-                if (signedInAccount != null) {
-                    val info = Games.getPlayersClient(this, signedInAccount)
-                    info.currentPlayer.addOnCompleteListener(this) { task ->
-                        if (task.isSuccessful) {
-                            val player: Player? = task.result
+            val signInAccount = result.signInAccount
 
-                            // Saves the information about the user in the shared preferences
-                            storeSharedPref("profileIconURI", player?.iconImageUri.toString())
-                            storeSharedPref("profileName", player?.name.toString())
+            // Checks if the user has actually logged in
+            if (result.isSuccess && signInAccount != null) {
+                val info = Games.getPlayersClient(this, signInAccount)
 
-                            checkProfile()
-                        }
+                info.currentPlayer.addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        // Saves the information about the user in the shared preferences
+                        storeSharedPref("profileIconURI", task.result?.iconImageUri.toString())
+                        storeSharedPref("profileName", task.result?.name.toString())
+
+                        updateProfileInfo()
                     }
                 }
-            } else {
-                var message = result.status.statusMessage
-                System.out.println("Message " + result.status)
-                if (message == null || message.isEmpty()) {
-                    message = "ERROR"
-                }
-                AlertDialog.Builder(this).setMessage(message)
-                    .setNeutralButton(android.R.string.ok, null).show()
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
+
+        // Updates the time when coming back from the game screen
         updateBestTime()
     }
 }
