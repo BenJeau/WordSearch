@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:backgroundTint="@color/colorPrimary"
     android:clipToPadding="false"
-    android:padding="20dp"
+    android:padding="@dimen/rootLayoutPadding"
     tools:context=".HomeActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -16,9 +16,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent">
 
-        <include
-            android:id="@+id/profilePicture"
-            layout="@layout/profile_picture" />
+        <include layout="@layout/profile_picture" />
 
         <ImageButton
             android:id="@+id/signOut"
@@ -99,7 +97,7 @@
         app:layout_constraintBottom_toBottomOf="parent">
 
         <TextView
-            android:id="@+id/highScoreTitle"
+            android:id="@+id/bestTimeTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/actor"
@@ -112,16 +110,15 @@
             app:layout_constraintLeft_toLeftOf="parent" />
 
         <TextView
-            android:id="@+id/highScore"
+            android:id="@+id/bestTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
             android:text="@string/na"
             android:textColor="@color/colorText"
             android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@id/highScoreTitle"
-            app:layout_constraintLeft_toRightOf="@id/highScoreTitle" />
-
+            app:layout_constraintBottom_toBottomOf="@id/bestTimeTitle"
+            app:layout_constraintLeft_toRightOf="@id/bestTimeTitle" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

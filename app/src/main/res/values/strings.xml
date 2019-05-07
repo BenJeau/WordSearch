@@ -14,7 +14,7 @@
     <string name="home_description">Mobile Android game</string>
     <string name="score">Score</string>
     <string name="time">Time</string>
-    <string name="checkmark">Checkmark</string>
+    <string name="check_mark">Check Mark</string>
     <string name="finished_message">Completed the game in %1$s seconds!</string>
     <string name="sign_out">Sign Out</string>
 </resources>

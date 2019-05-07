@@ -9,64 +9,30 @@
     tools:context=".GameActivity">
 
     <FrameLayout
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         android:id="@+id/gps_popup"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="20dp"
-        android:clipToPadding="false">
+        android:clipToPadding="false"
+        android:padding="@dimen/rootLayoutPadding">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/topLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="300dp"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <include layout="@layout/profile_picture" />
-
-            <ImageButton
-                android:id="@+id/playAgainIcon"
-                style="@style/Base.Widget.AppCompat.Button.Borderless"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="@string/play_again_button"
-                android:src="@drawable/ic_refresh_black_24dp"
-                android:tint="@drawable/icon_button_selector"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintRight_toLeftOf="@id/homeIcon"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <ImageButton
-                android:id="@+id/homeIcon"
-                style="@style/Base.Widget.AppCompat.Button.Borderless"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="20dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="@string/settings_description"
-                android:src="@drawable/ic_home_black_40dp"
-                android:tint="@drawable/icon_button_selector"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        <include
+            layout="@layout/game_top_layout"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content" />
 
         <androidx.cardview.widget.CardView
             android:id="@+id/gameInfo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            app:cardCornerRadius="20dp"
+            app:cardCornerRadius="@dimen/cardViewRadius"
             app:cardElevation="5dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="@id/topLayout"
@@ -134,7 +100,7 @@
             android:layout_height="0dp"
             android:layout_marginTop="20dp"
             app:cardBackgroundColor="@color/colorDarkGray"
-            app:cardCornerRadius="20dp"
+            app:cardCornerRadius="@dimen/cardViewRadius"
             app:cardElevation="5dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -146,8 +112,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:paddingStart="20dp"
-                android:paddingEnd="20dp"
                 android:paddingTop="10dp"
+                android:paddingEnd="20dp"
                 android:paddingBottom="10dp"
                 app:alignContent="stretch"
                 app:alignItems="stretch"
@@ -162,7 +128,7 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="20dp"
-            app:cardCornerRadius="20dp"
+            app:cardCornerRadius="@dimen/cardViewRadius"
             app:cardElevation="5dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toRightOf="@id/topLayout"
@@ -174,78 +140,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/gameBoardFinished"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:alpha="0"
-                    android:visibility="gone"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <ImageView
-                        android:id="@+id/checkIcon"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        android:contentDescription="@string/checkmark"
-                        android:src="@drawable/ic_check_black_40dp"
-                        android:tint="@android:color/white"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <TextView
-                        android:id="@+id/finishDescription"
-                        android:layout_width="200dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:fontFamily="@font/actor"
-                        android:textAlignment="center"
-                        android:textColor="@android:color/white"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/checkIcon" />
-
-                    <Button
-                        android:id="@+id/playAgainButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="15dp"
-                        android:background="@drawable/small_button"
-                        android:elevation="5dp"
-                        android:fontFamily="@font/actor"
-                        android:padding="15dp"
-                        android:stateListAnimator="@animator/button_animator"
-                        android:text="@string/play_again_button"
-                        android:textColor="@drawable/small_button_text"
-                        android:textSize="18sp"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/finishDescription" />
-
-                    <Button
-                        android:id="@+id/exitButton"
-                        android:layout_width="0dp"
-                        android:layout_height="35dp"
-                        android:layout_margin="15dp"
-                        android:alpha="0.7"
-                        android:background="@drawable/small_button"
-                        android:elevation="5dp"
-                        android:fontFamily="@font/actor"
-                        android:stateListAnimator="@animator/button_animator"
-                        android:text="@string/exit_button"
-                        android:textColor="@drawable/small_button_text"
-                        android:textSize="18sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/playAgainButton" />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                <include layout="@layout/game_finished" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/gameBoardContent"
@@ -266,6 +161,7 @@
                         app:justifyContent="space_around"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
+
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>

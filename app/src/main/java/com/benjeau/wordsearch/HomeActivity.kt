@@ -18,7 +18,7 @@ class HomeActivity : AppCompatActivity() {
     /**
      * References to the views in the layout
      */
-    private lateinit var highScoreText: TextView
+    private lateinit var bestTimeText: TextView
     private lateinit var profileIcon: ImageView
     private lateinit var firstName: TextView
     private lateinit var lastName: TextView
@@ -39,7 +39,7 @@ class HomeActivity : AppCompatActivity() {
         }
 
         // Shows prompt to sign in Google Play Games
-        val profileLayout: ConstraintLayout = findViewById(R.id.profilePicture)
+        val profileLayout: ConstraintLayout = findViewById(R.id.profilePictureLayout)
         profileLayout.setOnClickListener {
             profileOnClick()
         }
@@ -51,7 +51,7 @@ class HomeActivity : AppCompatActivity() {
      * Create references to the views often used
      */
     private fun setUpViews() {
-        highScoreText = findViewById(R.id.highScore)
+        bestTimeText = findViewById(R.id.bestTime)
         profileIcon = findViewById(R.id.profileIcon)
         firstName = findViewById(R.id.firstName)
         lastName = findViewById(R.id.lastName)
@@ -62,7 +62,7 @@ class HomeActivity : AppCompatActivity() {
      * Gets the value of the best time from shared preferences and displays it
      */
     private fun updateBestTime() {
-        highScoreText.text = if (getSharedPrefString("bestTime") == null) {
+        bestTimeText.text = if (getSharedPrefString("bestTime") == null) {
             "N.A."
         } else {
             getSharedPrefString("bestTime") + " s."

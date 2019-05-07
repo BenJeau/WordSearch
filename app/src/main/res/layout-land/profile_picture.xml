@@ -28,6 +28,13 @@
 
     </androidx.cardview.widget.CardView>
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/verticalCenterGuideline"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.5" />
+
     <TextView
         android:id="@+id/firstName"
         android:layout_width="wrap_content"
@@ -37,22 +44,20 @@
         android:text="@string/first_name_placeholder"
         android:textColor="@color/colorText"
         android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/profileIconLayout"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@id/verticalCenterGuideline"
+        app:layout_constraintLeft_toRightOf="@id/profileIconLayout" />
 
     <TextView
         android:id="@+id/lastName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginStart="16dp"
         android:fontFamily="@font/actor"
         android:text="@string/last_name_placeholder"
         android:textColor="@color/colorText"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/firstName"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintLeft_toRightOf="@id/profileIconLayout"
+        app:layout_constraintTop_toTopOf="@id/verticalCenterGuideline" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
