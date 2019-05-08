@@ -2,16 +2,11 @@ package com.benjeau.wordsearch
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
 import android.content.Intent
-import android.widget.TextView
-import android.net.Uri
-import android.widget.ImageButton
-import android.widget.ImageView
+import android.view.View
+import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.google.android.gms.auth.api.Auth
-import com.google.android.gms.common.images.ImageManager
-import com.google.android.gms.games.Games
+import com.google.android.gms.tasks.OnCompleteListener
 
 class HomeActivity : AppCompatActivity() {
 
@@ -44,7 +39,32 @@ class HomeActivity : AppCompatActivity() {
             profileOnClick()
         }
 
-        signOutButton.setOnClickListener { googlePlaySignOut() }
+        // Creates the values for the dropdown
+        val dropdown: Spinner = findViewById(R.id.spinner)
+        val items = (6..10).toList()
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items)
+        dropdown.adapter = adapter
+        dropdown.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                storeSharedPref(numberOfWords, items[position])
+            }
+        }
+
+        // Sets the default value for the spinner/dropdown
+        if (getSharedPrefInt(numberOfWords) != -1) {
+            dropdown.setSelection(items.indexOf(getSharedPrefInt(numberOfWords)))
+        } else {
+            dropdown.setSelection(2)
+        }
+
+        signOutButton.setOnClickListener {
+            googlePlaySignOut(OnCompleteListener {
+                storeSharedPref(profileIconURI, null)
+                storeSharedPref(profileName, null)
+                updateProfileInfo()
+            })
+        }
     }
 
     /**
@@ -62,10 +82,10 @@ class HomeActivity : AppCompatActivity() {
      * Gets the value of the best time from shared preferences and displays it
      */
     private fun updateBestTime() {
-        bestTimeText.text = if (getSharedPrefString("bestTime") == null) {
+        bestTimeText.text = if (getSharedPrefString(bestTimeValue) == null) {
             "N.A."
         } else {
-            getSharedPrefString("bestTime") + " s."
+            getSharedPrefString(bestTimeValue) + " s."
         }
     }
 
@@ -73,31 +93,10 @@ class HomeActivity : AppCompatActivity() {
      * Puts the information about the signed in user, if the user is signed in Google Play Games
      */
     private fun updateProfileInfo() {
-        // Updates the profile icon
-        val uri = getSharedPrefString("profileIconURI")
-        if (uri != null) {
-            profileIcon.setPadding(0, 0, 0, 0)
-            val mgr = ImageManager.create(this)
-            mgr.loadImage(profileIcon, Uri.parse(uri))
-        } else {
-            val profileMargin = dpToPx(10)
-            profileIcon.setPadding(profileMargin, profileMargin, profileMargin, profileMargin)
-            profileIcon.setImageResource(R.drawable.ic_games_controller_black_40dp)
-        }
-
-        // Sets up the profile name
-        val profileName = getSharedPrefString("profileName")
-        if (profileName != null) {
-            val name = profileName.split(" ")
-            firstName.text = name[0]
-            lastName.text = name[1]
-        } else {
-            firstName.text = getString(R.string.first_name_placeholder)
-            lastName.text = getString(R.string.last_name_placeholder)
-        }
+        updateProfileView(profileIcon, firstName, lastName)
 
         // Shows the logout button if the user is logged in
-        if (profileName != null || uri != null) {
+        if (getSharedPrefString(profileName) != null || getSharedPrefString(profileIconURI) != null) {
             animateShow(signOutButton)
         } else {
             animateHide(signOutButton)
@@ -108,30 +107,23 @@ class HomeActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == signInRequestCode) {
-            val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
-            val signInAccount = result.signInAccount
+            handleSignInRequest(data, OnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Saves the information about the user in the shared preferences
+                    storeSharedPref(profileIconURI, task.result?.iconImageUri.toString())
+                    storeSharedPref(profileName, task.result?.name.toString())
 
-            // Checks if the user has actually logged in
-            if (result.isSuccess && signInAccount != null) {
-                val info = Games.getPlayersClient(this, signInAccount)
-
-                info.currentPlayer.addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        // Saves the information about the user in the shared preferences
-                        storeSharedPref("profileIconURI", task.result?.iconImageUri.toString())
-                        storeSharedPref("profileName", task.result?.name.toString())
-
-                        updateProfileInfo()
-                    }
+                    updateProfileInfo()
                 }
-            }
+            })
         }
     }
 
     override fun onResume() {
         super.onResume()
 
-        // Updates the time when coming back from the game screen
+        // Updates the time and profile information when coming back from the game screen
         updateBestTime()
+        updateProfileInfo()
     }
 }

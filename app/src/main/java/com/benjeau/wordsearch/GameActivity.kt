@@ -15,7 +15,7 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
-import android.net.Uri
+import android.content.Intent
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -24,8 +24,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import java.util.*
-import com.google.android.gms.common.images.ImageManager
 import com.google.android.gms.games.Games
+import com.google.android.gms.tasks.OnCompleteListener
 
 class GameActivity : AppCompatActivity() {
 
@@ -70,6 +70,9 @@ class GameActivity : AppCompatActivity() {
     private lateinit var gameBoardFinished: ConstraintLayout
     private lateinit var gameInfo: CardView
     private lateinit var gameBoard: CardView
+    private lateinit var profileIcon: ImageView
+    private lateinit var firstName: TextView
+    private lateinit var lastName: TextView
 
     /**
      * The font used for the TextViews
@@ -164,6 +167,14 @@ class GameActivity : AppCompatActivity() {
     private fun initialSetup(rotated: Boolean) {
         setupViews()
 
+        updateProfileView(profileIcon, firstName, lastName)
+
+        // Shows prompt to sign in Google Play Games
+        val profileLayout: ConstraintLayout = findViewById(R.id.profilePictureLayout)
+        profileLayout.setOnClickListener {
+            profileOnClick()
+        }
+
         // Gets the height of the gameInfo layout for animating it
         gameInfo.post {
             gameInfo.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
@@ -185,37 +196,6 @@ class GameActivity : AppCompatActivity() {
                 .setNegativeButton(android.R.string.no, null)
                 .show()
         }
-
-        // Sets the profile picture and fetches a dummy profile picture if the user is not signed in
-        val profileIcon: ImageView = findViewById(R.id.profileIcon)
-
-        val uri = getSharedPrefString("profileIconURI")
-        if (uri != null) {
-            profileIcon.setPadding(0,0,0,0)
-            val imageManager = ImageManager.create(this)
-            imageManager.loadImage(profileIcon, Uri.parse(uri))
-        }
-
-        // Sets the profile name if signed in
-        val firstName: TextView = findViewById(R.id.firstName)
-        val lastName: TextView = findViewById(R.id.lastName)
-
-        val profileName = getSharedPrefString("profileName")
-        if (profileName != null) {
-            val name = profileName.split(" ")
-            firstName.text = name.subList(0, name.size - 1).joinToString (separator = " "){ it }
-            lastName.text = name.last()
-        }
-
-//        profileIcon.addOnLayoutChangeListener{ v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-//            if (profileIcon.drawable is BitmapDrawable) {
-//                val swatch = createPaletteSync((profileIcon.drawable as BitmapDrawable).bitmap).vibrantSwatch
-//                if (swatch != null) {
-//                    wordBankLayout.setBackgroundColor(swatch.rgb)
-//                    wordBankTextColor = swatch.bodyTextColor
-//                }
-//            }
-//        }
 
         // Sets action for the home button
         val homeIcon: ImageButton = findViewById(R.id.homeIcon)
@@ -242,6 +222,9 @@ class GameActivity : AppCompatActivity() {
         gameBoardFinished = findViewById(R.id.gameBoardFinished)
         gameInfo = findViewById(R.id.gameInfo)
         gameBoard = findViewById(R.id.gameBoard)
+        profileIcon = findViewById(R.id.profileIcon)
+        firstName = findViewById(R.id.firstName)
+        lastName = findViewById(R.id.lastName)
 
         // Allows the achievements pop-ups to show
         val account = GoogleSignIn.getLastSignedInAccount(this)
@@ -281,19 +264,27 @@ class GameActivity : AppCompatActivity() {
     }
 
     /**
-     * Adds every mandatory words and two random optional words to the word bank
+     * Adds every mandatory words and random optional words (depending on user input) to the word bank
      */
     private fun generateWordBank() {
         wordBank.addAll(WORDS)
 
-        val firstRandom  = (0 until OPTIONAL_WORDS.size).random()
-        var secondRandom: Int
-        do {
-            secondRandom = (0 until OPTIONAL_WORDS.size).random()
-        } while (firstRandom == secondRandom)
+        val numOfWords = getSharedPrefInt(numberOfWords)
 
-        wordBank.add(OPTIONAL_WORDS[firstRandom])
-        wordBank.add(OPTIONAL_WORDS[secondRandom])
+        if (numOfWords != -1 || numOfWords > 6) {
+            val numRandom = numOfWords - 6
+            val randomIndexes = arrayListOf<Int>()
+
+            for (i in (0 until numRandom)) {
+                var random: Int
+                do {
+                    random = (0 until OPTIONAL_WORDS.size).random()
+                } while(random in randomIndexes)
+
+                randomIndexes.add(random)
+                wordBank.add(OPTIONAL_WORDS[random])
+            }
+        }
 
         wordBank.sortByDescending {it.length}
 
@@ -692,6 +683,8 @@ class GameActivity : AppCompatActivity() {
      * The callback when the game is finished, it stops the time and animates the view to dismiss the game information
      */
     private fun finishedGame() {
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+
         // Stops the chronometer, get the elapsed seconds and displays it
         chronometer.stop()
 
@@ -700,12 +693,18 @@ class GameActivity : AppCompatActivity() {
         val finishDescription: TextView = findViewById(R.id.finishDescription)
         finishDescription.text = String.format(resources.getString(R.string.finished_message), elapsedSeconds)
 
-        // Updates the best time if the time is better than the previous one
-        var bestTime = getSharedPrefString("bestTime") ?: ""
+        // Updates the best time if the time is better than the previous one and unlocks the
+        // achievement if the user has beat his best time
+        var bestTime = getSharedPrefString(bestTimeValue) ?: ""
         if (bestTime == "" || bestTime.toInt() > elapsedSeconds) {
+            if (bestTime != "" && account != null) {
+                Games.getAchievementsClient(this, account)
+                    .unlock(getString(R.string.achievement_youre_getting_better))
+            }
+
             bestTime = elapsedSeconds.toString()
         }
-        storeSharedPref("bestTime", bestTime)
+        storeSharedPref(bestTimeValue, bestTime)
 
         // Animates the change of color of the board and shows the right content
         animateColorBackground(500, gameBoard, R.color.colorAccent)
@@ -741,10 +740,14 @@ class GameActivity : AppCompatActivity() {
         anim.interpolator = AccelerateDecelerateInterpolator()
         anim.start()
 
-        val account = GoogleSignIn.getLastSignedInAccount(this)
+        // Unlocks the achievements
         if (account != null) {
-            Games.getAchievementsClient(this, account)
-                .unlock(getString(R.string.achievement_tester))
+            val gameClient = Games.getAchievementsClient(this, account)
+            gameClient.increment(getString(R.string.achievement_played_10_times), 1)
+
+            if (elapsedSeconds < 10) {
+                gameClient.unlock(getString(R.string.achievement_you_are_fast))
+            }
         }
     }
 
@@ -794,10 +797,35 @@ class GameActivity : AppCompatActivity() {
         colorAnimation.start()
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == signInRequestCode) {
+            handleSignInRequest(data, OnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Saves the information about the user in the shared preferences
+                    storeSharedPref(profileIconURI, task.result?.iconImageUri.toString())
+                    storeSharedPref(profileName, task.result?.name.toString())
+
+                    updateProfileView(profileIcon, firstName, lastName)
+                }
+            })
+        }
+    }
+
     companion object {
         private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         private val WORDS =
             arrayListOf("Swift", "ObjectiveC", "Java", "Kotlin", "Variable", "Mobile")
-        private val OPTIONAL_WORDS = arrayListOf("Android", "iOS", "Shopify", "Game", "Google", "Apple", "Phone", "Plants", "Tea")
+        private val OPTIONAL_WORDS = arrayListOf(
+            "Android",
+            "iOS",
+            "Game",
+            "Google",
+            "Apple",
+            "Phone",
+            "Plants",
+            "Tea"
+        )
     }
 }

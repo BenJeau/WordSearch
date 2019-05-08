@@ -4,12 +4,10 @@
     <string name="app_id" translatable="false">66678505035</string>
     <!-- package_name -->
     <string name="package_name" translatable="false">com.benjeau.wordsearch</string>
-    <!-- achievement You fast! -->
-    <string name="achievement_you_fast" translatable="false">CgkIy_zksvgBEAIQAQ</string>
-    <!-- achievement You beat yourself! -->
-    <string name="achievement_you_beat_yourself" translatable="false">CgkIy_zksvgBEAIQAg</string>
-    <!-- achievement test -->
-    <string name="achievement_test" translatable="false">CgkIy_zksvgBEAIQBA</string>
-    <!-- achievement tester -->
-    <string name="achievement_tester" translatable="false">CgkIy_zksvgBEAIQBQ</string>
+    <!-- achievement Played 10 times -->
+    <string name="achievement_played_10_times" translatable="false">CgkIy_zksvgBEAIQAw</string>
+    <!-- achievement You are fast! -->
+    <string name="achievement_you_are_fast" translatable="false">CgkIy_zksvgBEAIQAQ</string>
+    <!-- achievement You're getting better! -->
+    <string name="achievement_youre_getting_better" translatable="false">CgkIy_zksvgBEAIQAg</string>
 </resources>

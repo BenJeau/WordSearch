@@ -7,7 +7,10 @@
     android:layout_height="match_parent"
     android:backgroundTint="@color/colorPrimary"
     android:clipToPadding="false"
-    android:padding="@dimen/rootLayoutPadding"
+    android:paddingStart="@dimen/rootLayoutPadding"
+    android:paddingTop="@dimen/rootLayoutPadding"
+    android:paddingEnd="@dimen/rootLayoutPadding"
+    android:paddingBottom="10dp"
     tools:context=".HomeActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -94,6 +97,7 @@
         android:id="@+id/bottomInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clipToPadding="false"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <TextView
@@ -107,7 +111,8 @@
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent" />
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/bestTime"
@@ -119,6 +124,31 @@
             android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="@id/bestTimeTitle"
             app:layout_constraintLeft_toRightOf="@id/bestTimeTitle" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/actor"
+            android:text="@string/number_of_words"
+            android:textAlignment="center"
+            android:textColor="@color/colorText"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/spinner"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatSpinner
+            android:id="@+id/spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/actor"
+            android:textColor="@color/colorText"
+            android:clipToPadding="false"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
