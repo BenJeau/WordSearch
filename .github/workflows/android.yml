@@ -19,8 +19,17 @@ jobs:
       run: zip -r artifacts ./app/build/outputs/apk/debug
     - name: Upload asset to release
       uses: actions-github/upload-to-release@v1.0.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         # Input file
         file: ./artifacts
         # File type
         type: application/zip
+    - name: Cache
+      uses: actions/cache@v1.1.0
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
