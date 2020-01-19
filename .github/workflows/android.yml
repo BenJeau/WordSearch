@@ -23,7 +23,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         # Input file
-        file: ./artifacts
+        file: ./artifacts.zip
         # File type
         type: application/zip
     - name: Cache
